@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Ahadu Car Market — Ethiopia's Certified Car Marketplace</title>
+<meta name="description" content="Ahadu Car Market — 175-point certified vehicles, transparent Birr pricing, and financing built for how Ethiopia drives.">
+
+<!-- Fonts: Space Grotesk (display / structural voice), Inter (body / readable at speed), IBM Plex Mono (data, prices, specs) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- Tailwind (CDN, config extended with the Ahadu design tokens) -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          obsidian: { DEFAULT: '#0B0D10', 2: '#12151A', 3: '#191D22' },
+          ivory: { DEFAULT: '#F1ECE3', dim: '#B9B3A6' },
+          brass: { DEFAULT: '#D4A63E', dim: '#8C6F28', bright: '#E8C468' },
+          emerald: { DEFAULT: '#123B2D', bright: '#1F7A5C' },
+          rust: { DEFAULT: '#A6542E' },
+          line: 'rgba(241,236,227,0.10)'
+        },
+        fontFamily: {
+          sans: ['Inter','system-ui','sans-serif'],
+          display: ['"Space Grotesk"','system-ui','sans-serif'],
+          plex: ['"IBM Plex Mono"','ui-monospace','monospace']
+        }
+      }
+    }
+  }
+</script>
+
+<!-- Three.js r128 / GSAP / ScrollTrigger -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<style>
+  /* ============ DESIGN TOKENS (mirrored as CSS vars for JS + non-Tailwind use) ============ */
+  :root{
+    --obsidian:#0B0D10;
+    --obsidian-2:#12151A;
+    --ivory:#F1ECE3;
+    --brass:#D4A63E;
+    --brass-bright:#E8C468;
+    --emerald:#123B2D;
+    --emerald-bright:#1F7A5C;
+    --rust:#A6542E;
+    --line: rgba(241,236,227,0.10);
+    --ease-luxury: cubic-bezier(.22,1,.36,1);
+  }
+
+  *{ scrollbar-width: thin; scrollbar-color: var(--brass-dim,#8C6F28) transparent; }
+  html{ background:var(--obsidian); scroll-behavior:auto; }
+  body{
+    background:var(--obsidian);
+    color:var(--ivory);
+    font-family:'Inter',system-ui,sans-serif;
+    overflow-x:hidden;
+    cursor: default;
+  }
+  ::-webkit-scrollbar{ width:8px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+  ::-webkit-scrollbar-thumb{ background:rgba(212,166,62,0.35); border-radius:4px; }
+
+  html.lock-scroll, html.lock-scroll body{ overflow:hidden; height:100%; }
+
+  /* ============ Structural / atmospheric layers ============ */
+  #bg-canvas{
+    position:fixed; inset:0; width:100vw; height:100vh; z-index:0; pointer-events:none;
+  }
+  .blueprint-grid{
+    position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.35;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black 20%, transparent 75%);
+  }
+  .film-grain{
+    position:fixed; inset:0; z-index:2; pointer-events:none; opacity:.045; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .vignette{
+    position:fixed; inset:0; z-index:2; pointer-events:none;
+    background: radial-gradient(120% 90% at 50% 30%, transparent 40%, rgba(11,13,16,0.55) 100%);
+  }
+  main, header, footer{ position:relative; z-index:10; }
+
+  /* ============ Type rhythm ============ */
+  .font-display{ font-family:'Space Grotesk',system-ui,sans-serif; letter-spacing:-0.01em; }
+  .font-plex{ font-family:'IBM Plex Mono',ui-monospace,monospace; }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace; font-size:.72rem; letter-spacing:.28em; text-transform:uppercase;
+    color:var(--brass-bright); font-weight:500;
+  }
+
+  /* ============ Glass — reserved for floating / overlay chrome only ============ */
+  .glass{
+    background: rgba(18,21,26,0.55);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border: 1px solid var(--line);
+  }
+
+  /* ============ Buttons ============ */
+  .btn-brass{
+    display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+    background: linear-gradient(180deg, var(--brass-bright), var(--brass));
+    color:#141008; font-weight:600; letter-spacing:.01em;
+    padding:.9rem 1.7rem; border-radius:2px; position:relative; overflow:hidden;
+    transition: transform .5s var(--ease-luxury), box-shadow .5s var(--ease-luxury);
+    box-shadow: 0 1px 0 rgba(255,255,255,.25) inset, 0 8px 24px -8px rgba(212,166,62,.45);
+  }
+  .btn-brass:hover{ transform: translateY(-2px); box-shadow: 0 1px 0 rgba(255,255,255,.3) inset, 0 14px 32px -10px rgba(212,166,62,.6); }
+  .btn-brass:active{ transform: translateY(0); }
+
+  .btn-ghost{
+    display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+    border:1px solid rgba(241,236,227,0.25); color:var(--ivory);
+    padding:.9rem 1.7rem; border-radius:2px; font-weight:500;
+    transition: border-color .4s var(--ease-luxury), background .4s var(--ease-luxury);
+  }
+  .btn-ghost:hover{ border-color: var(--brass); background: rgba(212,166,62,0.08); }
+
+  a, button{ outline-offset:4px; }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible{
+    outline: 2px solid var(--brass); outline-offset:3px; border-radius:2px;
+  }
+
+  /* ============ Nav ============ */
+  #site-nav{ transition: background .4s var(--ease-luxury), border-color .4s var(--ease-luxury); }
+
+  /* ============ Cards ============ */
+  .tilt-card{ transform-style:preserve-3d; will-change:transform; }
+  .feature-card{
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
+    border:1px solid var(--line);
+  }
+  .feature-card:hover{ border-color: rgba(212,166,62,.4); }
+
+  .listing-card{ border:1px solid var(--line); background:var(--obsidian-2); }
+  .listing-card .badge{
+    font-family:'IBM Plex Mono',monospace; font-size:.65rem; letter-spacing:.14em;
+  }
+
+  /* ============ Marquee ============ */
+  .marquee-track{ display:flex; width:max-content; animation: marquee 32s linear infinite; }
+  @keyframes marquee{ from{ transform:translateX(0);} to{ transform:translateX(-50%);} }
+
+  /* ============ FAQ (native details/summary — accessible by default) ============ */
+  details.faq-item{ border-bottom:1px solid var(--line); }
+  details.faq-item summary{ list-style:none; cursor:pointer; }
+  details.faq-item summary::-webkit-details-marker{ display:none; }
+  details.faq-item .chev{ transition: transform .35s var(--ease-luxury); }
+  details.faq-item[open] .chev{ transform: rotate(45deg); }
+  details.faq-item .faq-body{
+    max-height:0; overflow:hidden; transition: max-height .45s var(--ease-luxury), opacity .3s ease, margin .3s ease;
+    opacity:0;
+  }
+  details.faq-item[open] .faq-body{ max-height:280px; opacity:1; }
+
+  /* ============ Loader ============ */
+  #loader{ position:fixed; inset:0; z-index:100; background:var(--obsidian); display:flex; align-items:center; justify-content:center; }
+  #loader svg{ transform:rotate(-90deg); }
+
+  /* ============ Custom cursor (desktop, motion-safe only) ============ */
+  #cursor-dot{
+    position:fixed; top:0; left:0; width:8px; height:8px; border-radius:50%; background:var(--brass);
+    pointer-events:none; z-index:90; transform:translate(-50%,-50%); mix-blend-mode:difference;
+  }
+  #cursor-ring{
+    position:fixed; top:0; left:0; width:34px; height:34px; border-radius:50%; border:1px solid rgba(212,166,62,.6);
+    pointer-events:none; z-index:90; transform:translate(-50%,-50%);
+  }
+
+  /* ============ Skip link ============ */
+  .skip-link{
+    position:absolute; left:1rem; top:-4rem; background:var(--brass); color:#141008; padding:.6rem 1rem; z-index:200;
+    transition: top .3s var(--ease-luxury); border-radius:2px; font-weight:600;
+  }
+  .skip-link:focus{ top:1rem; }
+
+  /* ============ Reveal helpers (progressive enhancement; JS adds .revealed) ============ */
+  .reveal{ opacity:0; transform:translateY(28px); }
+  .reveal.revealed{ opacity:1; transform:translateY(0); transition: opacity .9s var(--ease-luxury), transform .9s var(--ease-luxury); }
+
+  /* ============ Journey beats ============ */
+  .journey-beat{ position:absolute; inset:0; display:flex; align-items:center; opacity:0; pointer-events:none; transition:none; }
+  .journey-beat.active{ opacity:1; }
+
+  /* ============ Reduced motion ============ */
+  @media (prefers-reduced-motion: reduce){
+    .reveal{ opacity:1 !important; transform:none !important; }
+    .marquee-track{ animation:none !important; }
+    #cursor-dot, #cursor-ring{ display:none !important; }
+    *{ scroll-behavior:auto !important; }
+  }
+
+  @media (max-width: 767px){
+    #cursor-dot, #cursor-ring{ display:none; }
+  }
+</style>
+</head>
+
+<body class="antialiased">
+
+<a href="#main-content" class="skip-link">Skip to content</a>
+
+<!-- ============================================================ LOADER ============================================================ -->
+<div id="loader" aria-hidden="true">
+  <svg width="120" height="120" viewBox="0 0 120 120">
+    <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(241,236,227,0.08)" stroke-width="2"></circle>
+    <circle id="loader-ring" cx="60" cy="60" r="52" fill="none" stroke="#D4A63E" stroke-width="2"
+      stroke-dasharray="327" stroke-dashoffset="327" stroke-linecap="round"></circle>
+  </svg>
+  <div class="absolute font-plex text-ivory text-sm tracking-widest" id="loader-pct">0%</div>
+  <div class="absolute mt-24 font-display text-xs tracking-[0.3em] text-brass uppercase">Ahadu</div>
+</div>
+
+<!-- ============================================================ ATMOSPHERE LAYERS ============================================================ -->
+<canvas id="bg-canvas"></canvas>
+<div class="blueprint-grid"></div>
+<div class="vignette"></div>
+<div class="film-grain"></div>
+<div id="cursor-dot"></div>
+<div id="cursor-ring"></div>
+
+<!-- ============================================================ NAV ============================================================ -->
+<header id="site-nav" class="fixed top-0 left-0 right-0 z-50 border-b border-transparent">
+  <div class="max-w-7xl mx-auto px-6 md:px-10 h-20 flex items-center justify-between">
+    <a href="#hero" class="flex items-baseline gap-2 group">
+      <span class="font-display text-2xl font-bold tracking-tight text-ivory">AHADU</span>
+      <span class="eyebrow !text-[0.6rem] !tracking-[0.22em] text-ivory-dim opacity-70">CAR MARKET</span>
+    </a>
+
+    <nav class="hidden lg:flex items-center gap-10 font-display text-sm text-ivory/80" aria-label="Primary">
+      <a href="#inventory" class="hover:text-brass transition-colors duration-300">Inventory</a>
+      <a href="#process" class="hover:text-brass transition-colors duration-300">Sell Your Car</a>
+      <a href="#features" class="hover:text-brass transition-colors duration-300">Financing</a>
+      <a href="#proof" class="hover:text-brass transition-colors duration-300">About</a>
+      <a href="#faq" class="hover:text-brass transition-colors duration-300">FAQ</a>
+    </nav>
+
+    <div class="flex items-center gap-4">
+      <a href="#cta" class="hidden md:inline-flex btn-brass !py-2.5 !px-5 text-sm">Book a Test Drive</a>
+      <button id="menu-toggle" class="lg:hidden w-10 h-10 flex flex-col items-center justify-center gap-1.5" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+        <span class="w-6 h-px bg-ivory"></span>
+        <span class="w-6 h-px bg-ivory"></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Mobile menu overlay -->
+<div id="mobile-menu" class="fixed inset-0 z-40 bg-obsidian/98 backdrop-blur-xl flex flex-col items-center justify-center gap-8 translate-y-[-100%] opacity-0 lg:hidden" aria-hidden="true">
+  <nav class="flex flex-col items-center gap-8 font-display text-2xl" aria-label="Mobile">
+    <a href="#inventory" class="mobile-link">Inventory</a>
+    <a href="#process" class="mobile-link">Sell Your Car</a>
+    <a href="#features" class="mobile-link">Financing</a>
+    <a href="#proof" class="mobile-link">About</a>
+    <a href="#faq" class="mobile-link">FAQ</a>
+    <a href="#cta" class="mobile-link text-brass">Book a Test Drive</a>
+  </nav>
+</div>
+
+<main id="main-content">
+
+  <!-- ============================================================ HERO ============================================================ -->
+  <section id="hero" class="relative min-h-[100svh] flex flex-col justify-center px-6 md:px-10">
+    <div class="max-w-7xl mx-auto w-full">
+      <p class="eyebrow reveal mb-6">Ethiopia's Certified Car Marketplace</p>
+      <h1 class="font-display reveal text-[2.6rem] leading-[1.02] sm:text-6xl md:text-7xl lg:text-8xl font-semibold max-w-5xl">
+        Every road<br><span class="text-brass">starts with trust.</span>
+      </h1>
+      <p class="reveal mt-8 max-w-xl text-ivory-dim text-lg leading-relaxed">
+        175-point inspections, transparent Birr pricing, and financing built for how Addis actually drives.
+        Browse verified vehicles from Bole to Bahir Dar.
+      </p>
+      <div class="reveal mt-10 flex flex-wrap items-center gap-4">
+        <a href="#inventory" class="btn-brass">Browse Inventory</a>
+        <a href="#process" class="btn-ghost">Sell Your Car</a>
+      </div>
+    </div>
+
+    <!-- Data strip: mono, not gradient-card — the marketplace's operational proof -->
+    <div class="reveal max-w-7xl mx-auto w-full mt-20 md:mt-28 border-t border-line pt-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6 font-plex text-xs sm:text-sm text-ivory-dim uppercase tracking-wider">
+        <div><span class="text-brass text-xl block font-medium tracking-normal">2,400+</span>Verified Listings</div>
+        <div><span class="text-brass text-xl block font-medium tracking-normal">11</span>Cities Covered</div>
+        <div><span class="text-brass text-xl block font-medium tracking-normal">48hr</span>Avg. Delivery</div>
+        <div><span class="text-brass text-xl block font-medium tracking-normal">4.8/5</span>Buyer Rating</div>
+      </div>
+    </div>
+
+    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-60" aria-hidden="true">
+      <span class="font-plex text-[0.65rem] tracking-[0.25em]">SCROLL</span>
+      <span class="w-px h-8 bg-gradient-to-b from-brass to-transparent"></span>
+    </div>
+  </section>
+
+  <!-- ============================================================ JOURNEY (pinned cinematic dolly) ============================================================ -->
+  <section id="journey" class="relative h-[100svh] px-6 md:px-10 overflow-hidden">
+    <div class="max-w-7xl mx-auto h-full relative">
+      <div class="journey-beat active" data-beat="0">
+        <div class="max-w-lg">
+          <span class="font-plex text-brass text-xs tracking-[0.3em]">01 — INSPECTED</span>
+          <h2 class="font-display text-4xl md:text-6xl mt-4 leading-tight">Bumper to bumper,<br>before it's yours.</h2>
+          <p class="text-ivory-dim mt-5 text-lg max-w-md">Every vehicle passes a 175-point mechanical and cosmetic check before it ever reaches our lot.</p>
+        </div>
+      </div>
+      <div class="journey-beat" data-beat="1">
+        <div class="max-w-lg ml-auto text-right">
+          <span class="font-plex text-brass text-xs tracking-[0.3em]">02 — PRICED IN THE OPEN</span>
+          <h2 class="font-display text-4xl md:text-6xl mt-4 leading-tight">No hidden fees.<br>No surprises.</h2>
+          <p class="text-ivory-dim mt-5 text-lg max-w-md ml-auto">The price on the listing is the price you sign for — in Birr, in full, upfront.</p>
+        </div>
+      </div>
+      <div class="journey-beat" data-beat="2">
+        <div class="max-w-lg">
+          <span class="font-plex text-brass text-xs tracking-[0.3em]">03 — FINANCED FOR REAL LIFE</span>
+          <h2 class="font-display text-4xl md:text-6xl mt-4 leading-tight">Terms that fit<br>Ethiopian incomes.</h2>
+          <p class="text-ivory-dim mt-5 text-lg max-w-md">Partnered with local banks and microfinance institutions for flexible, honest terms.</p>
+        </div>
+      </div>
+      <div class="journey-beat" data-beat="3">
+        <div class="max-w-lg ml-auto text-right">
+          <span class="font-plex text-brass text-xs tracking-[0.3em]">04 — DELIVERED TO YOUR DOOR</span>
+          <h2 class="font-display text-4xl md:text-6xl mt-4 leading-tight">From our showroom<br>to your driveway.</h2>
+          <p class="text-ivory-dim mt-5 text-lg max-w-md ml-auto">Bole showroom to nationwide doorstep delivery — 48 hours or less.</p>
+        </div>
+      </div>
+
+      <!-- progress ticks -->
+      <div class="absolute bottom-10 left-0 flex gap-2" aria-hidden="true">
+        <span class="beat-dot w-8 h-[3px] bg-brass transition-all duration-300" data-dot="0"></span>
+        <span class="beat-dot w-8 h-[3px] bg-line transition-all duration-300" data-dot="1"></span>
+        <span class="beat-dot w-8 h-[3px] bg-line transition-all duration-300" data-dot="2"></span>
+        <span class="beat-dot w-8 h-[3px] bg-line transition-all duration-300" data-dot="3"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ FEATURES ============================================================ -->
+  <section id="features" class="relative py-28 md:py-36 px-6 md:px-10">
+    <div class="max-w-7xl mx-auto">
+      <div class="max-w-2xl">
+        <p class="eyebrow reveal">Why Ahadu</p>
+        <h2 class="font-display reveal text-4xl md:text-5xl mt-4 leading-tight">Built like an institution.<br>Runs like a garage.</h2>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-px mt-16 bg-line">
+        <!-- feature card template x6 -->
+        <div class="feature-card tilt-card reveal p-8 bg-obsidian">
+          <svg class="w-8 h-8 text-brass mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+          <h3 class="font-display text-xl">Certified 175-Point Inspection</h3>
+          <p class="text-ivory-dim mt-3 text-sm leading-relaxed">Engine, transmission, electronics, and body — checked by our own certified mechanics, not the seller.</p>
+        </div>
+        <div class="feature-card tilt-card reveal p-8 bg-obsidian">
+          <svg class="w-8 h-8 text-brass mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+          <h3 class="font-display text-xl">Transparent Birr Pricing</h3>
+          <p class="text-ivory-dim mt-3 text-sm leading-relaxed">Every listing shows the full out-the-door price. No negotiation theater, no last-minute fees.</p>
+        </div>
+        <div class="feature-card tilt-card reveal p-8 bg-obsidian">
+          <svg class="w-8 h-8 text-brass mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="1"/><path d="M3 10h18"/></svg>
+          <h3 class="font-display text-xl">Flexible Financing Partners</h3>
+          <p class="text-ivory-dim mt-3 text-sm leading-relaxed">Pre-approval in under a day through our local bank and microfinance network.</p>
+        </div>
+        <div class="feature-card tilt-card reveal p-8 bg-obsidian">
+          <svg class="w-8 h-8 text-brass mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 12h13l4 4v3H3z"/><circle cx="7.5" cy="19" r="1.5"/><circle cx="16.5" cy="19" r="1.5"/></svg>
+          <h3 class="font-display text-xl">Nationwide Delivery</h3>
+          <p class="text-ivory-dim mt-3 text-sm leading-relaxed">From Addis to Adama, Hawassa, Bahir Dar and beyond — tracked door-to-door delivery.</p>
+        </div>
+        <div class="feature-card tilt-card reveal p-8 bg-obsidian">
+          <svg class="w-8 h-8 text-brass mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M12 3v18M4 8l8-5 8 5M4 16l8 5 8-5"/></svg>
+          <h3 class="font-display text-xl">Instant Trade-In Valuation</h3>
+          <p class="text-ivory-dim mt-3 text-sm leading-relaxed">Get a real, honest valuation for your current car in minutes — applied straight to your upgrade.</p>
+        </div>
+        <div class="feature-card tilt-card reveal p-8 bg-obsidian">
+          <svg class="w-8 h-8 text-brass mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/></svg>
+          <h3 class="font-display text-xl">90-Day Mechanical Guarantee</h3>
+          <p class="text-ivory-dim mt-3 text-sm leading-relaxed">If something we missed goes wrong in the first 90 days, we fix it — no questions asked.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ PROCESS ============================================================ -->
+  <section id="process" class="relative py-28 md:py-36 px-6 md:px-10 bg-obsidian-2/40 border-y border-line">
+    <div class="max-w-7xl mx-auto">
+      <p class="eyebrow reveal">How It Works</p>
+      <h2 class="font-display reveal text-4xl md:text-5xl mt-4 leading-tight max-w-2xl">Four steps between browsing and driving.</h2>
+
+      <div class="grid md:grid-cols-4 gap-8 mt-16">
+        <div class="reveal border-t border-brass pt-6">
+          <span class="font-plex text-brass text-sm">01</span>
+          <h3 class="font-display text-lg mt-3">Browse &amp; Compare</h3>
+          <p class="text-ivory-dim text-sm mt-2 leading-relaxed">Filter by budget, body type, and city to shortlist verified vehicles.</p>
+        </div>
+        <div class="reveal border-t border-brass pt-6">
+          <span class="font-plex text-brass text-sm">02</span>
+          <h3 class="font-display text-lg mt-3">Schedule an Inspection</h3>
+          <p class="text-ivory-dim text-sm mt-2 leading-relaxed">Visit our Bole showroom or request the full 175-point report online.</p>
+        </div>
+        <div class="reveal border-t border-brass pt-6">
+          <span class="font-plex text-brass text-sm">03</span>
+          <h3 class="font-display text-lg mt-3">Finance &amp; Sign</h3>
+          <p class="text-ivory-dim text-sm mt-2 leading-relaxed">Choose cash or one of our partner financing plans, sign digitally.</p>
+        </div>
+        <div class="reveal border-t border-brass pt-6">
+          <span class="font-plex text-brass text-sm">04</span>
+          <h3 class="font-display text-lg mt-3">Drive Away</h3>
+          <p class="text-ivory-dim text-sm mt-2 leading-relaxed">Pick up in Addis or have it delivered to your door within 48 hours.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ INVENTORY ============================================================ -->
+  <section id="inventory" class="relative py-28 md:py-36 px-6 md:px-10">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex flex-wrap items-end justify-between gap-6">
+        <div>
+          <p class="eyebrow reveal">Featured Inventory</p>
+          <h2 class="font-display reveal text-4xl md:text-5xl mt-4 leading-tight">On the lot this week.</h2>
+        </div>
+        <div class="reveal flex flex-wrap gap-2" role="tablist" aria-label="Filter inventory by category">
+          <button class="filter-tab btn-ghost !py-2 !px-4 text-sm active" data-filter="all" role="tab" aria-selected="true">All</button>
+          <button class="filter-tab btn-ghost !py-2 !px-4 text-sm" data-filter="sedan" role="tab" aria-selected="false">Sedan</button>
+          <button class="filter-tab btn-ghost !py-2 !px-4 text-sm" data-filter="suv" role="tab" aria-selected="false">SUV</button>
+          <button class="filter-tab btn-ghost !py-2 !px-4 text-sm" data-filter="truck" role="tab" aria-selected="false">Truck</button>
+        </div>
+      </div>
+
+      <div id="inventory-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-14">
+        <!-- Card 1 -->
+        <article class="listing-card tilt-card reveal rounded-sm overflow-hidden" data-category="sedan">
+          <div class="h-40 bg-gradient-to-br from-obsidian-3 to-obsidian-2 flex items-center justify-center border-b border-line">
+            <svg viewBox="0 0 120 48" class="w-2/3 opacity-70" fill="none" stroke="#D4A63E" stroke-width="1.2"><path d="M8 34h4l6-12h60l10 12h6"/><rect x="18" y="22" width="60" height="12" rx="2"/><circle cx="30" cy="36" r="6"/><circle cx="88" cy="36" r="6"/></svg>
+          </div>
+          <div class="p-6">
+            <div class="flex items-center justify-between">
+              <span class="badge inline-block px-2 py-1 border border-brass/40 text-brass rounded-sm">CERTIFIED</span>
+              <span class="font-plex text-xs text-ivory-dim">2021</span>
+            </div>
+            <h3 class="font-display text-xl mt-4">Toyota Corolla 1.8 XLi</h3>
+            <p class="text-ivory-dim text-sm mt-1">42,000 km · Automatic · Addis Ababa</p>
+            <div class="mt-5 flex items-end justify-between">
+              <span class="font-plex text-brass text-lg price-count" data-target="1450000">ETB 0</span>
+              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Details →</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 2 -->
+        <article class="listing-card tilt-card reveal rounded-sm overflow-hidden" data-category="suv">
+          <div class="h-40 bg-gradient-to-br from-obsidian-3 to-obsidian-2 flex items-center justify-center border-b border-line">
+            <svg viewBox="0 0 120 48" class="w-2/3 opacity-70" fill="none" stroke="#1F7A5C" stroke-width="1.2"><path d="M6 34h6l8-16h56l14 16h6"/><rect x="16" y="18" width="66" height="16" rx="2"/><circle cx="30" cy="36" r="6"/><circle cx="88" cy="36" r="6"/></svg>
+          </div>
+          <div class="p-6">
+            <div class="flex items-center justify-between">
+              <span class="badge inline-block px-2 py-1 border border-brass/40 text-brass rounded-sm">CERTIFIED</span>
+              <span class="font-plex text-xs text-ivory-dim">2020</span>
+            </div>
+            <h3 class="font-display text-xl mt-4">Hyundai Tucson GLS</h3>
+            <p class="text-ivory-dim text-sm mt-1">61,500 km · Automatic · Adama</p>
+            <div class="mt-5 flex items-end justify-between">
+              <span class="font-plex text-brass text-lg price-count" data-target="3180000">ETB 0</span>
+              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Details →</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 3 -->
+        <article class="listing-card tilt-card reveal rounded-sm overflow-hidden" data-category="suv">
+          <div class="h-40 bg-gradient-to-br from-obsidian-3 to-obsidian-2 flex items-center justify-center border-b border-line">
+            <svg viewBox="0 0 120 48" class="w-2/3 opacity-70" fill="none" stroke="#D4A63E" stroke-width="1.2"><path d="M4 34h6l9-17h58l15 17h6"/><rect x="15" y="17" width="70" height="17" rx="2"/><circle cx="30" cy="36" r="6.5"/><circle cx="90" cy="36" r="6.5"/></svg>
+          </div>
+          <div class="p-6">
+            <div class="flex items-center justify-between">
+              <span class="badge inline-block px-2 py-1 border border-brass/40 text-brass rounded-sm">CERTIFIED</span>
+              <span class="font-plex text-xs text-ivory-dim">2019</span>
+            </div>
+            <h3 class="font-display text-xl mt-4">Toyota Land Cruiser Prado</h3>
+            <p class="text-ivory-dim text-sm mt-1">78,200 km · Automatic · Bahir Dar</p>
+            <div class="mt-5 flex items-end justify-between">
+              <span class="font-plex text-brass text-lg price-count" data-target="6420000">ETB 0</span>
+              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Details →</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 4 -->
+        <article class="listing-card tilt-card reveal rounded-sm overflow-hidden" data-category="sedan">
+          <div class="h-40 bg-gradient-to-br from-obsidian-3 to-obsidian-2 flex items-center justify-center border-b border-line">
+            <svg viewBox="0 0 120 48" class="w-2/3 opacity-70" fill="none" stroke="#1F7A5C" stroke-width="1.2"><path d="M8 34h4l6-11h58l9 11h6"/><rect x="18" y="23" width="58" height="11" rx="2"/><circle cx="30" cy="36" r="6"/><circle cx="86" cy="36" r="6"/></svg>
+          </div>
+          <div class="p-6">
+            <div class="flex items-center justify-between">
+              <span class="badge inline-block px-2 py-1 border border-brass/40 text-brass rounded-sm">CERTIFIED</span>
+              <span class="font-plex text-xs text-ivory-dim">2022</span>
+            </div>
+            <h3 class="font-display text-xl mt-4">Suzuki Dzire GL+</h3>
+            <p class="text-ivory-dim text-sm mt-1">18,900 km · Manual · Hawassa</p>
+            <div class="mt-5 flex items-end justify-between">
+              <span class="font-plex text-brass text-lg price-count" data-target="1120000">ETB 0</span>
+              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Details →</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 5 -->
+        <article class="listing-card tilt-card reveal rounded-sm overflow-hidden" data-category="truck">
+          <div class="h-40 bg-gradient-to-br from-obsidian-3 to-obsidian-2 flex items-center justify-center border-b border-line">
+            <svg viewBox="0 0 120 48" class="w-2/3 opacity-70" fill="none" stroke="#D4A63E" stroke-width="1.2"><path d="M4 34h4l7-15h34v15M60 34h50l-8-12h-16v12"/><circle cx="26" cy="36" r="6.5"/><circle cx="94" cy="36" r="6.5"/></svg>
+          </div>
+          <div class="p-6">
+            <div class="flex items-center justify-between">
+              <span class="badge inline-block px-2 py-1 border border-brass/40 text-brass rounded-sm">CERTIFIED</span>
+              <span class="font-plex text-xs text-ivory-dim">2018</span>
+            </div>
+            <h3 class="font-display text-xl mt-4">Toyota Hilux Double Cab</h3>
+            <p class="text-ivory-dim text-sm mt-1">96,000 km · Manual · Mekelle</p>
+            <div class="mt-5 flex items-end justify-between">
+              <span class="font-plex text-brass text-lg price-count" data-target="3950000">ETB 0</span>
+              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Details →</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 6 -->
+        <article class="listing-card tilt-card reveal rounded-sm overflow-hidden" data-category="suv">
+          <div class="h-40 bg-gradient-to-br from-obsidian-3 to-obsidian-2 flex items-center justify-center border-b border-line">
+            <svg viewBox="0 0 120 48" class="w-2/3 opacity-70" fill="none" stroke="#1F7A5C" stroke-width="1.2"><path d="M6 34h6l8-15h56l13 15h6"/><rect x="17" y="19" width="64" height="15" rx="2"/><circle cx="30" cy="36" r="6"/><circle cx="88" cy="36" r="6"/></svg>
+          </div>
+          <div class="p-6">
+            <div class="flex items-center justify-between">
+              <span class="badge inline-block px-2 py-1 border border-brass/40 text-brass rounded-sm">CERTIFIED</span>
+              <span class="font-plex text-xs text-ivory-dim">2021</span>
+            </div>
+            <h3 class="font-display text-xl mt-4">Toyota RAV4 LE</h3>
+            <p class="text-ivory-dim text-sm mt-1">33,400 km · Automatic · Addis Ababa</p>
+            <div class="mt-5 flex items-end justify-between">
+              <span class="font-plex text-brass text-lg price-count" data-target="4380000">ETB 0</span>
+              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Details →</a>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ SOCIAL PROOF ============================================================ -->
+  <section id="proof" class="relative py-28 md:py-36 px-6 md:px-10 bg-obsidian-2/40 border-y border-line overflow-hidden">
+    <div class="max-w-7xl mx-auto">
+      <p class="eyebrow reveal">Trusted Across Ethiopia</p>
+      <h2 class="font-display reveal text-4xl md:text-5xl mt-4 leading-tight max-w-2xl">Buyers who used to fear used cars.</h2>
+
+      <div class="grid md:grid-cols-3 gap-6 mt-16">
+        <blockquote class="reveal border-l-2 border-brass pl-6 py-2">
+          <p class="text-ivory-dim leading-relaxed">"The inspection report showed me things I would never have noticed myself. I finally felt like the dealer was on my side."</p>
+          <cite class="not-italic font-plex text-xs text-brass block mt-4">— Selam T., Addis Ababa</cite>
+        </blockquote>
+        <blockquote class="reveal border-l-2 border-brass pl-6 py-2">
+          <p class="text-ivory-dim leading-relaxed">"Delivery to Hawassa took two days, exactly as promised. The car matched the listing down to the scratch on the bumper."</p>
+          <cite class="not-italic font-plex text-xs text-brass block mt-4">— Dawit A., Hawassa</cite>
+        </blockquote>
+        <blockquote class="reveal border-l-2 border-brass pl-6 py-2">
+          <p class="text-ivory-dim leading-relaxed">"Financing through their bank partner was faster than applying myself. Signed digitally and picked up the same week."</p>
+          <cite class="not-italic font-plex text-xs text-brass block mt-4">— Rahel M., Adama</cite>
+        </blockquote>
+      </div>
+
+      <!-- partner marquee -->
+      <div class="reveal mt-20 overflow-hidden">
+        <div class="marquee-track gap-16 font-display text-xl text-ivory-dim/50 uppercase tracking-widest">
+          <span class="px-8">Awash Bank</span><span class="px-8">Dashen Bank</span><span class="px-8">Wegagen</span><span class="px-8">Hibret Bank</span><span class="px-8">Oromia Insurance</span><span class="px-8">Nib Bank</span>
+          <span class="px-8" aria-hidden="true">Awash Bank</span><span class="px-8" aria-hidden="true">Dashen Bank</span><span class="px-8" aria-hidden="true">Wegagen</span><span class="px-8" aria-hidden="true">Hibret Bank</span><span class="px-8" aria-hidden="true">Oromia Insurance</span><span class="px-8" aria-hidden="true">Nib Bank</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ FAQ ============================================================ -->
+  <section id="faq" class="relative py-28 md:py-36 px-6 md:px-10">
+    <div class="max-w-3xl mx-auto">
+      <p class="eyebrow reveal">Common Questions</p>
+      <h2 class="font-display reveal text-4xl md:text-5xl mt-4 leading-tight">Before you ask, we answer.</h2>
+
+      <div class="mt-14 reveal">
+        <details class="faq-item py-6" open>
+          <summary class="flex items-center justify-between gap-4">
+            <span class="font-display text-lg">Who is eligible for financing?</span>
+            <span class="chev font-plex text-brass text-xl">+</span>
+          </summary>
+          <div class="faq-body text-ivory-dim text-sm leading-relaxed mt-3 pr-8">Most salaried employees and registered business owners with 6+ months of income history qualify through one of our partner banks. We handle the paperwork with you in-store or online.</div>
+        </details>
+        <details class="faq-item py-6">
+          <summary class="flex items-center justify-between gap-4">
+            <span class="font-display text-lg">What does the 90-day guarantee cover?</span>
+            <span class="chev font-plex text-brass text-xl">+</span>
+          </summary>
+          <div class="faq-body text-ivory-dim text-sm leading-relaxed mt-3 pr-8">Any mechanical fault present at the time of sale that our inspection missed is repaired free of charge for 90 days or 5,000 km, whichever comes first.</div>
+        </details>
+        <details class="faq-item py-6">
+          <summary class="flex items-center justify-between gap-4">
+            <span class="font-display text-lg">Do you deliver outside of Addis Ababa?</span>
+            <span class="chev font-plex text-brass text-xl">+</span>
+          </summary>
+          <div class="faq-body text-ivory-dim text-sm leading-relaxed mt-3 pr-8">Yes — we deliver nationwide to 11 cities including Adama, Hawassa, Bahir Dar, and Mekelle, typically within 48 hours of signing.</div>
+        </details>
+        <details class="faq-item py-6">
+          <summary class="flex items-center justify-between gap-4">
+            <span class="font-display text-lg">Can I trade in my current car?</span>
+            <span class="chev font-plex text-brass text-xl">+</span>
+          </summary>
+          <div class="faq-body text-ivory-dim text-sm leading-relaxed mt-3 pr-8">Yes. Submit your car's details for an instant estimate, then get a final valuation at inspection — applied directly toward your next purchase.</div>
+        </details>
+        <details class="faq-item py-6">
+          <summary class="flex items-center justify-between gap-4">
+            <span class="font-display text-lg">Can I see the full inspection report before buying?</span>
+            <span class="chev font-plex text-brass text-xl">+</span>
+          </summary>
+          <div class="faq-body text-ivory-dim text-sm leading-relaxed mt-3 pr-8">Every listing includes a downloadable 175-point report with photos, so you know exactly what you're buying before you visit.</div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ FINAL CTA ============================================================ -->
+  <section id="cta" class="relative py-28 md:py-36 px-6 md:px-10 border-t border-line">
+    <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-start">
+      <div class="reveal">
+        <p class="eyebrow">Ready When You Are</p>
+        <h2 class="font-display text-4xl md:text-5xl mt-4 leading-tight">Find your next car today.</h2>
+        <p class="text-ivory-dim mt-6 max-w-md leading-relaxed">Tell us what you're looking for and a certified advisor will call you within one business day — no pressure, no obligation.</p>
+      </div>
+
+      <form id="lead-form" class="reveal glass p-8 rounded-sm" novalidate>
+        <div id="form-success" class="hidden text-center py-10">
+          <svg class="w-10 h-10 mx-auto text-brass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg>
+          <p class="font-display text-xl mt-4">Request received.</p>
+          <p class="text-ivory-dim text-sm mt-2">An Ahadu advisor will call you within one business day.</p>
+        </div>
+
+        <div id="form-fields" class="space-y-5">
+          <div>
+            <label for="f-name" class="text-xs font-plex tracking-widest text-ivory-dim uppercase">Full Name</label>
+            <input id="f-name" name="name" type="text" required class="mt-2 w-full bg-transparent border border-line focus:border-brass rounded-sm px-4 py-3 text-ivory placeholder:text-ivory-dim/40 transition-colors" placeholder="Abebe Kebede">
+            <p class="field-error hidden text-rust text-xs mt-1">Please enter your name.</p>
+          </div>
+          <div>
+            <label for="f-phone" class="text-xs font-plex tracking-widest text-ivory-dim uppercase">Phone Number</label>
+            <input id="f-phone" name="phone" type="tel" required class="mt-2 w-full bg-transparent border border-line focus:border-brass rounded-sm px-4 py-3 text-ivory placeholder:text-ivory-dim/40 transition-colors" placeholder="+251 9__ ___ ___">
+            <p class="field-error hidden text-rust text-xs mt-1">Please enter a valid phone number.</p>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label for="f-city" class="text-xs font-plex tracking-widest text-ivory-dim uppercase">City</label>
+              <select id="f-city" name="city" class="mt-2 w-full bg-obsidian-2 border border-line focus:border-brass rounded-sm px-4 py-3 text-ivory transition-colors">
+                <option>Addis Ababa</option><option>Adama</option><option>Bahir Dar</option><option>Hawassa</option><option>Mekelle</option><option>Other</option>
+              </select>
+            </div>
+            <div>
+              <label for="f-type" class="text-xs font-plex tracking-widest text-ivory-dim uppercase">Interested In</label>
+              <select id="f-type" name="type" class="mt-2 w-full bg-obsidian-2 border border-line focus:border-brass rounded-sm px-4 py-3 text-ivory transition-colors">
+                <option>Sedan</option><option>SUV</option><option>Truck</option><option>Any</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn-brass w-full mt-2">Request a Call Back</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============================================================ FOOTER ============================================================ -->
+<footer class="relative border-t border-line px-6 md:px-10 py-16">
+  <div class="max-w-7xl mx-auto grid sm:grid-cols-2 lg:grid-cols-5 gap-10">
+    <div class="lg:col-span-2">
+      <span class="font-display text-2xl text-ivory">AHADU</span>
+      <p class="text-ivory-dim text-sm mt-4 max-w-xs leading-relaxed">Ethiopia's certified car marketplace. Inspected, priced honestly, financed for real life.</p>
+      <div class="flex gap-4 mt-6" aria-label="Social media">
+        <a href="#" aria-label="Facebook" class="w-9 h-9 border border-line rounded-full flex items-center justify-center hover:border-brass transition-colors"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M13 22v-9h3l1-4h-4V7c0-1 .3-2 2-2h2V1.1C16.7 1 15.6 1 14.3 1 11 1 9 3 9 6.5V9H6v4h3v9z"/></svg></a>
+        <a href="#" aria-label="Instagram" class="w-9 h-9 border border-line rounded-full flex items-center justify-center hover:border-brass transition-colors"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg></a>
+        <a href="#" aria-label="Telegram" class="w-9 h-9 border border-line rounded-full flex items-center justify-center hover:border-brass transition-colors"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M21 4L2.5 11.3c-1 .4-1 1.6.1 1.9l4.6 1.5 1.8 5.6c.3.9 1.4 1.1 2 .4l2.6-2.7 4.9 3.6c.8.6 2 .2 2.2-.8L23 4.9c.2-.9-.7-1.5-2-.9z"/></svg></a>
+      </div>
+    </div>
+    <div>
+      <h4 class="font-plex text-xs tracking-widest text-brass uppercase">Company</h4>
+      <ul class="mt-4 space-y-3 text-sm text-ivory-dim">
+        <li><a href="#proof" class="hover:text-ivory transition-colors">About Us</a></li>
+        <li><a href="#" class="hover:text-ivory transition-colors">Careers</a></li>
+        <li><a href="#" class="hover:text-ivory transition-colors">Press</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="font-plex text-xs tracking-widest text-brass uppercase">Inventory</h4>
+      <ul class="mt-4 space-y-3 text-sm text-ivory-dim">
+        <li><a href="#inventory" class="hover:text-ivory transition-colors">Sedans</a></li>
+        <li><a href="#inventory" class="hover:text-ivory transition-colors">SUVs</a></li>
+        <li><a href="#inventory" class="hover:text-ivory transition-colors">Trucks</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="font-plex text-xs tracking-widest text-brass uppercase">Support</h4>
+      <ul class="mt-4 space-y-3 text-sm text-ivory-dim">
+        <li><a href="#features" class="hover:text-ivory transition-colors">Financing</a></li>
+        <li><a href="#features" class="hover:text-ivory transition-colors">Warranty</a></li>
+        <li><a href="#cta" class="hover:text-ivory transition-colors">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="max-w-7xl mx-auto mt-14 pt-6 border-t border-line flex flex-col sm:flex-row justify-between gap-4 text-xs text-ivory-dim font-plex">
+    <span>© 2026 Ahadu Car Market. All rights reserved.</span>
+    <div class="flex gap-6">
+      <a href="#" class="hover:text-ivory transition-colors">Terms</a>
+      <a href="#" class="hover:text-ivory transition-colors">Privacy</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  /* =========================================================================
+     0. ENVIRONMENT FLAGS
+  ========================================================================= */
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var isMobile = window.matchMedia('(max-width: 767px)').matches;
+  var isTouch = 'ontouchstart' in window;
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  /* =========================================================================
+     1. LOADER — minimum-perceived-quality gate so the 3D scene never pops in
+  ========================================================================= */
+  var loaderEl = document.getElementById('loader');
+  var loaderRing = document.getElementById('loader-ring');
+  var loaderPct = document.getElementById('loader-pct');
+  document.documentElement.classList.add('lock-scroll');
+
+  var loadProgress = 0;
+  var loadTimer = setInterval(function(){
+    loadProgress += (100 - loadProgress) * 0.12 + 1;
+    if (loadProgress > 99) loadProgress = 99;
+    paintLoader(loadProgress);
+  }, 90);
+
+  function paintLoader(p){
+    var circumference = 327;
+    loaderRing.style.strokeDashoffset = String(circumference - (circumference * p / 100));
+    loaderPct.textContent = Math.floor(p) + '%';
+  }
+
+  window.addEventListener('load', function(){
+    setTimeout(finishLoading, 500); // minimum perceived polish time
+  });
+  // Fallback in case 'load' is slow/blocked
+  setTimeout(finishLoading, 4000);
+
+  var loaderDone = false;
+  function finishLoading(){
+    if (loaderDone) return;
+    loaderDone = true;
+    clearInterval(loadTimer);
+    paintLoader(100);
+    gsap.to(loaderEl, {
+      opacity: 0, duration: 0.7, delay: 0.15, ease: 'power2.out',
+      onComplete: function(){
+        loaderEl.style.display = 'none';
+        document.documentElement.classList.remove('lock-scroll');
+        playHeroIntro();
+        ScrollTrigger.refresh();
+      }
+    });
+  }
+
+  /* =========================================================================
+     2. REVEAL-ON-SCROLL (progressive enhancement over the .reveal base state)
+  ========================================================================= */
+  var revealEls = document.querySelectorAll('.reveal');
+  revealEls.forEach(function(el, i){
+    if (reduceMotion){ el.classList.add('revealed'); return; }
+    ScrollTrigger.create({
+      trigger: el,
+      start: 'top 88%',
+      onEnter: function(){ el.classList.add('revealed'); }
+    });
+  });
+
+  function playHeroIntro(){
+    var heroReveals = document.querySelectorAll('#hero .reveal');
+    heroReveals.forEach(function(el){ el.classList.add('revealed'); });
+  }
+
+  /* =========================================================================
+     3. NAV: scroll shading + mobile menu
+  ========================================================================= */
+  var nav = document.getElementById('site-nav');
+  window.addEventListener('scroll', function(){
+    if (window.scrollY > 40){
+      nav.classList.add('glass');
+      nav.style.borderBottomColor = 'var(--line)';
+    } else {
+      nav.classList.remove('glass');
+      nav.style.borderBottomColor = 'transparent';
+    }
+  }, { passive: true });
+
+  var menuToggle = document.getElementById('menu-toggle');
+  var mobileMenu = document.getElementById('mobile-menu');
+  var menuOpen = false;
+  menuToggle.addEventListener('click', function(){
+    menuOpen = !menuOpen;
+    menuToggle.setAttribute('aria-expanded', String(menuOpen));
+    mobileMenu.setAttribute('aria-hidden', String(!menuOpen));
+    if (menuOpen){
+      mobileMenu.style.pointerEvents = 'auto';
+      gsap.to(mobileMenu, { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out' });
+      gsap.fromTo(mobileMenu.querySelectorAll('.mobile-link'),
+        { y: 20, opacity: 0 }, { y: 0, opacity: 1, stagger: 0.06, delay: 0.1, duration: 0.4 });
+    } else {
+      gsap.to(mobileMenu, { y: '-100%', opacity: 0, duration: 0.4, ease: 'power3.in',
+        onComplete: function(){ mobileMenu.style.pointerEvents = 'none'; } });
+    }
+  });
+  mobileMenu.querySelectorAll('.mobile-link').forEach(function(a){
+    a.addEventListener('click', function(){ menuToggle.click(); });
+  });
+
+  /* =========================================================================
+     4. CUSTOM CURSOR (desktop + motion-safe only — purely ambient, never blocks input)
+  ========================================================================= */
+  if (!isTouch && !reduceMotion && !isMobile){
+    var dot = document.getElementById('cursor-dot');
+    var ring = document.getElementById('cursor-ring');
+    var setDot = gsap.quickTo(dot, 'x', { duration: 0.05, ease: 'none' });
+    var setDotY = gsap.quickTo(dot, 'y', { duration: 0.05, ease: 'none' });
+    var setRing = gsap.quickTo(ring, 'x', { duration: 0.35, ease: 'power3.out' });
+    var setRingY = gsap.quickTo(ring, 'y', { duration: 0.35, ease: 'power3.out' });
+    window.addEventListener('mousemove', function(e){
+      setDot(e.clientX); setDotY(e.clientY);
+      setRing(e.clientX); setRingY(e.clientY);
+    }, { passive: true });
+    document.querySelectorAll('a, button, .tilt-card').forEach(function(el){
+      el.addEventListener('mouseenter', function(){ gsap.to(ring, { scale: 1.8, duration: 0.3 }); });
+      el.addEventListener('mouseleave', function(){ gsap.to(ring, { scale: 1, duration: 0.3 }); });
+    });
+  } else {
+    var d = document.getElementById('cursor-dot'), r = document.getElementById('cursor-ring');
+    if (d) d.remove(); if (r) r.remove();
+  }
+
+  /* =========================================================================
+     5. TILT CARDS — subtle 3D hover, disabled on touch/reduced-motion
+  ========================================================================= */
+  if (!isTouch && !reduceMotion){
+    document.querySelectorAll('.tilt-card').forEach(function(card){
+      var rx = gsap.quickTo(card, 'rotationX', { duration: 0.5, ease: 'power3.out' });
+      var ry = gsap.quickTo(card, 'rotationY', { duration: 0.5, ease: 'power3.out' });
+      card.style.perspective = '800px';
+      card.addEventListener('mousemove', function(e){
+        var b = card.getBoundingClientRect();
+        var px = (e.clientX - b.left) / b.width - 0.5;
+        var py = (e.clientY - b.top) / b.height - 0.5;
+        ry(px * 8);
+        rx(py * -8);
+      });
+      card.addEventListener('mouseleave', function(){ rx(0); ry(0); });
+    });
+  }
+
+  /* =========================================================================
+     6. FAQ — collapse siblings for a cleaner single-open accordion feel
+  ========================================================================= */
+  var faqItems = document.querySelectorAll('.faq-item');
+  faqItems.forEach(function(item){
+    item.addEventListener('toggle', function(){
+      if (item.open){
+        faqItems.forEach(function(other){ if (other !== item) other.open = false; });
+      }
+    });
+  });
+
+  /* =========================================================================
+     7. INVENTORY FILTER TABS
+  ========================================================================= */
+  var tabs = document.querySelectorAll('.filter-tab');
+  var cards = document.querySelectorAll('#inventory-grid .listing-card');
+  tabs.forEach(function(tab){
+    tab.addEventListener('click', function(){
+      tabs.forEach(function(t){ t.classList.remove('active'); t.setAttribute('aria-selected','false'); t.style.borderColor=''; t.style.color=''; });
+      tab.classList.add('active'); tab.setAttribute('aria-selected','true');
+      tab.style.borderColor = 'var(--brass)'; tab.style.color = 'var(--brass)';
+      var f = tab.getAttribute('data-filter');
+      cards.forEach(function(card){
+        var show = (f === 'all' || card.getAttribute('data-category') === f);
+        gsap.to(card, { opacity: show ? 1 : 0, scale: show ? 1 : 0.96, duration: 0.35, ease: 'power2.out',
+          onStart: function(){ if (show) card.style.display = ''; },
+          onComplete: function(){ if (!show) card.style.display = 'none'; } });
+      });
+    });
+  });
+
+  /* =========================================================================
+     8. PRICE COUNT-UP (Birr) — triggers once per card as it enters view
+  ========================================================================= */
+  function formatBirr(n){
+    return 'ETB ' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+  document.querySelectorAll('.price-count').forEach(function(el){
+    var target = parseFloat(el.getAttribute('data-target')) || 0;
+    ScrollTrigger.create({
+      trigger: el,
+      start: 'top 90%',
+      once: true,
+      onEnter: function(){
+        if (reduceMotion){ el.textContent = formatBirr(target); return; }
+        var obj = { v: 0 };
+        gsap.to(obj, {
+          v: target, duration: 1.6, ease: 'power2.out',
+          onUpdate: function(){ el.textContent = formatBirr(obj.v); }
+        });
+      }
+    });
+  });
+
+  /* =========================================================================
+     9. LEAD FORM — client-side validation + success state
+  ========================================================================= */
+  var form = document.getElementById('lead-form');
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var name = document.getElementById('f-name');
+    var phone = document.getElementById('f-phone');
+    var valid = true;
+
+    if (!name.value.trim()){ showError(name); valid = false; } else { hideError(name); }
+    var phoneOk = /^[0-9+\s-]{7,}$/.test(phone.value.trim());
+    if (!phoneOk){ showError(phone); valid = false; } else { hideError(phone); }
+
+    if (!valid) return;
+
+    var fields = document.getElementById('form-fields');
+    var success = document.getElementById('form-success');
+    gsap.to(fields, { opacity: 0, y: -10, duration: 0.3, onComplete: function(){
+      fields.classList.add('hidden');
+      success.classList.remove('hidden');
+      gsap.fromTo(success, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5 });
+    }});
+  });
+  function showError(input){
+    input.classList.add('!border-rust');
+    var msg = input.parentElement.querySelector('.field-error');
+    if (msg) msg.classList.remove('hidden');
+  }
+  function hideError(input){
+    input.classList.remove('!border-rust');
+    var msg = input.parentElement.querySelector('.field-error');
+    if (msg) msg.classList.add('hidden');
+  }
+
+  /* =========================================================================
+     10. JOURNEY — pinned narrative beats (own local scroll progress)
+  ========================================================================= */
+  var beats = document.querySelectorAll('.journey-beat');
+  var dots = document.querySelectorAll('.beat-dot');
+  function setActiveBeat(idx){
+    beats.forEach(function(b){ b.classList.toggle('active', parseInt(b.getAttribute('data-beat'),10) === idx); });
+    dots.forEach(function(d){
+      var active = parseInt(d.getAttribute('data-dot'),10) === idx;
+      d.style.background = active ? 'var(--brass)' : 'var(--line)';
+      d.style.width = active ? '32px' : '32px';
+    });
+  }
+  setActiveBeat(0);
+
+  if (!reduceMotion){
+    ScrollTrigger.create({
+      trigger: '#journey',
+      start: 'top top',
+      end: '+=300%',
+      pin: true,
+      scrub: true,
+      onUpdate: function(self){
+        var idx = Math.min(3, Math.floor(self.progress * 4));
+        setActiveBeat(idx);
+      }
+    });
+  } else {
+    // reduced motion: stack beats simply as static readable blocks, no pin
+    document.getElementById('journey').style.height = 'auto';
+    beats.forEach(function(b, i){
+      b.style.position = 'relative';
+      b.style.opacity = 1;
+      b.style.padding = '4rem 0';
+    });
+  }
+
+  /* =========================================================================
+     11. GLOBAL SCROLL PROGRESS — drives the Three.js camera dolly (section 12)
+  ========================================================================= */
+  var sceneProgress = 0;
+  ScrollTrigger.create({
+    trigger: document.body,
+    start: 'top top',
+    end: 'bottom bottom',
+    scrub: 0.5,
+    onUpdate: function(self){ sceneProgress = self.progress; }
+  });
+
+  /* =========================================================================
+     12. THREE.JS — cinematic background: wireframe vehicle + particle field
+         Every element here is atmosphere in service of the scroll story,
+         not decoration: camera position = current chapter, particle density
+         = ambient depth, light color = mood shift between chapters.
+  ========================================================================= */
+  var canvas = document.getElementById('bg-canvas');
+  var renderer, scene, camera, carGroup, particles, keyLight, fillLight;
+  var rafId = null;
+  var sceneReady = false;
+
+  function initScene(){
+    if (!window.THREE) return;
+
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x0B0D10, 0.045);
+
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 1.3, 6);
+
+    // -- Lighting: brass key light (warm, "showroom"), emerald fill (depth, mood shift)
+    keyLight = new THREE.DirectionalLight(0xD4A63E, 1.1);
+    keyLight.position.set(4, 5, 3);
+    scene.add(keyLight);
+
+    fillLight = new THREE.PointLight(0x1F7A5C, 0.8, 20);
+    fillLight.position.set(-4, 1, -3);
+    scene.add(fillLight);
+
+    var ambient = new THREE.AmbientLight(0xF1ECE3, 0.18);
+    scene.add(ambient);
+
+    // -- Signature element: a brass wireframe/blueprint car built from primitives
+    carGroup = buildCarModel();
+    scene.add(carGroup);
+
+    // -- Particle field: ambient depth, road-dust drifting through the scene
+    particles = buildParticles();
+    scene.add(particles);
+
+    sceneReady = true;
+    animate();
+
+    window.addEventListener('resize', debounce(onResize, 150), { passive: true });
+    document.addEventListener('visibilitychange', onVisibilityChange);
+  }
+
+  function buildCarModel(){
+    var group = new THREE.Group();
+    var lineMat = new THREE.LineBasicMaterial({ color: 0xD4A63E, transparent: true, opacity: 0.9 });
+    var fillMat = new THREE.MeshBasicMaterial({ color: 0x1F7A5C, transparent: true, opacity: 0.05 });
+
+    function addEdged(geo, pos, rot){
+      var mesh = new THREE.Mesh(geo, fillMat);
+      var edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo), lineMat);
+      var wrap = new THREE.Group();
+      wrap.add(mesh); wrap.add(edges);
+      if (pos) wrap.position.set(pos[0], pos[1], pos[2]);
+      if (rot) wrap.rotation.set(rot[0], rot[1], rot[2]);
+      group.add(wrap);
+      return wrap;
+    }
+
+    // lower body
+    addEdged(new THREE.BoxGeometry(2.7, 0.5, 1.15), [0, 0, 0]);
+    // cabin
+    addEdged(new THREE.BoxGeometry(1.35, 0.5, 1.02), [-0.05, 0.5, 0]);
+    // hood taper (front)
+    addEdged(new THREE.BoxGeometry(0.6, 0.28, 1.0), [1.5, -0.02, 0]);
+    // trunk taper (rear)
+    addEdged(new THREE.BoxGeometry(0.5, 0.24, 1.0), [-1.45, -0.02, 0]);
+
+    // wheels + rims
+    var wheelPositions = [[0.95, -0.45, 0.62], [0.95, -0.45, -0.62], [-0.95, -0.45, 0.62], [-0.95, -0.45, -0.62]];
+    wheelPositions.forEach(function(p){
+      addEdged(new THREE.CylinderGeometry(0.36, 0.36, 0.22, 20), p, [0, 0, Math.PI/2]);
+      addEdged(new THREE.TorusGeometry(0.2, 0.045, 8, 20), p, [0, 0, Math.PI/2]);
+    });
+
+    group.scale.set(0.85, 0.85, 0.85);
+    group.position.y = -0.2;
+    return group;
+  }
+
+  function buildParticles(){
+    var count = isMobile ? 260 : 700;
+    var positions = new Float32Array(count * 3);
+    var colors = new Float32Array(count * 3);
+    var brass = new THREE.Color(0xD4A63E);
+    var emerald = new THREE.Color(0x1F7A5C);
+
+    for (var i = 0; i < count; i++){
+      positions[i*3]   = (Math.random() - 0.5) * 24;
+      positions[i*3+1] = (Math.random() - 0.5) * 14;
+      positions[i*3+2] = (Math.random() - 0.5) * 20 - 4;
+      var c = Math.random() > 0.5 ? brass : emerald;
+      colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
+    }
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    var mat = new THREE.PointsMaterial({
+      size: 0.045, vertexColors: true, transparent: true, opacity: 0.65,
+      blending: THREE.AdditiveBlending, depthWrite: false
+    });
+    return new THREE.Points(geo, mat);
+  }
+
+  // Camera keyframes: each maps a chapter of the scroll story to a shot.
+  var keyframes = [
+    { p: 0.00, cam: [0, 1.3, 6.0],   rot: 0.0,               col: 0xD4A63E },
+    { p: 0.20, cam: [3.1, 1.6, 4.1], rot: Math.PI * 0.5,     col: 0xD4A63E },
+    { p: 0.42, cam: [-3.3, 2.0, 3.5],rot: Math.PI * 1.1,     col: 0x1F7A5C },
+    { p: 0.60, cam: [0, 2.6, 5.4],   rot: Math.PI * 1.6,     col: 0x1F7A5C },
+    { p: 0.80, cam: [2.6, 1.2, 6.4], rot: Math.PI * 2.0,     col: 0xD4A63E },
+    { p: 1.00, cam: [0, 1.0, 8.4],   rot: Math.PI * 2.4,     col: 0xD4A63E }
+  ];
+
+  var targetCamPos = new THREE.Vector3(0, 1.3, 6.0);
+  var targetLookAt = new THREE.Vector3(0, 0.5, 0);
+  var targetCarRot = 0;
+  var currentCarRot = 0;
+  var targetLightHex = 0xD4A63E;
+  var clock = new THREE.Clock();
+
+  function updateKeyframeTargets(p){
+    var lo = keyframes[0], hi = keyframes[keyframes.length - 1];
+    for (var i = 0; i < keyframes.length - 1; i++){
+      if (p >= keyframes[i].p && p <= keyframes[i+1].p){ lo = keyframes[i]; hi = keyframes[i+1]; break; }
+    }
+    var span = (hi.p - lo.p) || 1;
+    var t = (p - lo.p) / span;
+    t = Math.max(0, Math.min(1, t));
+
+    targetCamPos.set(
+      lo.cam[0] + (hi.cam[0]-lo.cam[0]) * t,
+      lo.cam[1] + (hi.cam[1]-lo.cam[1]) * t,
+      lo.cam[2] + (hi.cam[2]-lo.cam[2]) * t
+    );
+    targetCarRot = lo.rot + (hi.rot - lo.rot) * t;
+    targetLightHex = t < 0.5 ? lo.col : hi.col;
+  }
+
+  function animate(){
+    rafId = requestAnimationFrame(animate);
+    var dt = clock.getDelta();
+
+    if (!reduceMotion){
+      updateKeyframeTargets(sceneProgress);
+    }
+
+    // Smooth camera dolly (decouples buttery motion from raw scroll jank)
+    camera.position.lerp(targetCamPos, reduceMotion ? 1 : 0.06);
+    camera.lookAt(targetLookAt);
+
+    // Car rotation eases toward its target chapter angle
+    currentCarRot += (targetCarRot - currentCarRot) * (reduceMotion ? 1 : 0.05);
+    if (carGroup) carGroup.rotation.y = currentCarRot;
+
+    // Mood lighting cross-fade
+    if (keyLight){
+      keyLight.color.lerp(new THREE.Color(targetLightHex), 0.03);
+    }
+
+    // Ambient particle drift — slow, continuous, never distracting
+    if (particles && !reduceMotion){
+      particles.rotation.y += dt * 0.015;
+      particles.position.y = Math.sin(clock.elapsedTime * 0.08) * 0.3;
+    }
+
+    renderer.render(scene, camera);
+  }
+
+  function onResize(){
+    if (!renderer || !camera) return;
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  function onVisibilityChange(){
+    if (document.hidden){
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = null;
+    } else if (sceneReady && !rafId){
+      clock.getDelta(); // discard the paused-time delta
+      animate();
+    }
+  }
+
+  function debounce(fn, wait){
+    var t;
+    return function(){
+      clearTimeout(t);
+      var args = arguments;
+      t = setTimeout(function(){ fn.apply(null, args); }, wait);
+    };
+  }
+
+  if (window.THREE){ initScene(); }
+
+})();
+</script>
+</body>
+</html>
