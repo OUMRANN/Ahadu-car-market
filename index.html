@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#08080a">
 <title>Ahadu Car Market — Ethiopia's Premier Vehicle Dealership</title>
 <meta name="description" content="Ahadu Car Market — Ethiopia's premier direct vehicle dealership. 175-point inspected cars, transparent Birr pricing, and financing, sold directly by Ahadu.">
 
@@ -35,13 +36,12 @@
   }
 </script>
 
-<!-- Three.js r128 / GSAP / ScrollTrigger -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- GSAP core + ScrollTrigger (used only for the pinned "Why Ahadu" counter and a couple of tweens — no heavy per-frame WebGL work) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 
 <style>
-  /* ============ DESIGN TOKENS (mirrored as CSS vars for JS + non-Tailwind use) ============ */
+  /* ============ DESIGN TOKENS ============ */
   :root{
     --obsidian:#08080a;
     --obsidian-2:#101014;
@@ -55,7 +55,7 @@
     --ease-luxury: cubic-bezier(.22,1,.36,1);
   }
 
-  *{ scrollbar-width: thin; scrollbar-color: var(--brass-dim,#8C6F28) transparent; }
+  *{ scrollbar-width: thin; scrollbar-color: #8C6F28 transparent; }
   html{ background:var(--obsidian); scroll-behavior:auto; }
   body{
     background:var(--obsidian);
@@ -70,27 +70,46 @@
 
   html.lock-scroll, html.lock-scroll body{ overflow:hidden; height:100%; }
 
-  /* ============ Structural / atmospheric layers ============ */
-  #bg-canvas{
-    position:fixed; inset:0; width:100vw; height:100vh; z-index:0; pointer-events:none;
+  /* ============ Atmosphere layers — pure CSS/SVG, no WebGL, no per-frame cost ============ */
+  .auto-bg{ position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+  .auto-bg-glow{
+    position:absolute; left:50%; top:-10%; width:140vw; height:70vh; transform:translateX(-50%);
+    background: radial-gradient(ellipse 50% 50% at 50% 0%, rgba(212,166,62,0.10), transparent 70%);
+  }
+  .auto-bg-floor{
+    position:absolute; left:0; right:0; bottom:0; height:45vh;
+    background: radial-gradient(ellipse 60% 100% at 50% 100%, rgba(212,166,62,0.08), transparent 70%);
   }
   .blueprint-grid{
-    position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.35;
+    position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.22;
     background-image:
       linear-gradient(var(--line) 1px, transparent 1px),
       linear-gradient(90deg, var(--line) 1px, transparent 1px);
     background-size: 64px 64px;
     mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black 20%, transparent 75%);
   }
-  .film-grain{
-    position:fixed; inset:0; z-index:2; pointer-events:none; opacity:.045; mix-blend-mode:overlay;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
   .vignette{
     position:fixed; inset:0; z-index:2; pointer-events:none;
-    background: radial-gradient(120% 90% at 50% 30%, transparent 40%, rgba(11,13,16,0.55) 100%);
+    background: radial-gradient(120% 90% at 50% 30%, transparent 40%, rgba(8,8,10,0.6) 100%);
   }
   main, header, footer{ position:relative; z-index:10; }
+
+  /* Hero showroom graphic: solid brass-lit silhouette, not a wireframe — sits inside the hero only */
+  .hero-car{ position:absolute; right:-4%; bottom:6%; width:min(60vw, 780px); opacity:.16; pointer-events:none; z-index:0; }
+  .hero-car svg{ width:100%; height:auto; display:block; }
+  .hero-sweep{
+    position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:0;
+  }
+  .hero-sweep::after{
+    content:''; position:absolute; top:0; left:-30%; width:30%; height:100%;
+    background: linear-gradient(100deg, transparent, rgba(212,166,62,0.06), transparent);
+    animation: sweep 9s ease-in-out infinite;
+  }
+  @keyframes sweep{
+    0%{ transform:translateX(0); }
+    50%{ transform:translateX(430%); }
+    100%{ transform:translateX(430%); }
+  }
 
   /* ============ Type rhythm ============ */
   .font-display{ font-family:'Space Grotesk',system-ui,sans-serif; letter-spacing:-0.01em; }
@@ -100,21 +119,24 @@
     color:var(--brass-bright); font-weight:500;
   }
 
-  /* ============ Glass — reserved for floating / overlay chrome only ============ */
+  /* ============ Glass — reserved for floating chrome; disabled on mobile for performance ============ */
   .glass{
-    background: rgba(18,21,26,0.55);
-    backdrop-filter: blur(16px) saturate(140%);
-    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    background: rgba(16,16,20,0.6);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
     border: 1px solid var(--line);
+  }
+  @media (max-width: 767px){
+    .glass{ background: rgba(12,12,15,0.92); backdrop-filter:none; -webkit-backdrop-filter:none; }
   }
 
   /* ============ Buttons ============ */
   .btn-brass{
-    display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+    display:inline-flex; align-items:center; justify-content:center; gap:.6rem;
     background: linear-gradient(180deg, var(--brass-bright), var(--brass));
     color:#141008; font-weight:600; letter-spacing:.01em;
-    padding:.9rem 1.7rem; border-radius:2px; position:relative; overflow:hidden;
-    transition: transform .5s var(--ease-luxury), box-shadow .5s var(--ease-luxury);
+    padding:.9rem 1.7rem; border-radius:2px; position:relative;
+    transition: transform .35s var(--ease-luxury), box-shadow .35s var(--ease-luxury);
     box-shadow: 0 1px 0 rgba(255,255,255,.25) inset, 0 8px 24px -8px rgba(212,166,62,.45);
   }
   .btn-brass:hover{ transform: translateY(-2px); box-shadow: 0 1px 0 rgba(255,255,255,.3) inset, 0 14px 32px -10px rgba(212,166,62,.6); }
@@ -124,7 +146,7 @@
     display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
     border:1px solid rgba(241,236,227,0.25); color:var(--ivory);
     padding:.9rem 1.7rem; border-radius:2px; font-weight:500;
-    transition: border-color .4s var(--ease-luxury), background .4s var(--ease-luxury);
+    transition: border-color .3s var(--ease-luxury), background .3s var(--ease-luxury);
   }
   .btn-ghost:hover{ border-color: var(--brass); background: rgba(212,166,62,0.08); }
 
@@ -134,10 +156,10 @@
   }
 
   /* ============ Nav ============ */
-  #site-nav{ transition: background .4s var(--ease-luxury), border-color .4s var(--ease-luxury); }
+  #site-nav{ transition: background .3s var(--ease-luxury), border-color .3s var(--ease-luxury); }
 
   /* ============ Cards ============ */
-  .tilt-card{ transform-style:preserve-3d; will-change:transform; }
+  .tilt-card{ transform-style:preserve-3d; }
   .feature-card{
     background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
     border:1px solid var(--line);
@@ -145,29 +167,34 @@
   .feature-card:hover{ border-color: rgba(212,166,62,.4); }
 
   .listing-card{ border:1px solid var(--line); background:var(--obsidian-2); }
-  .listing-card .badge{
-    font-family:'IBM Plex Mono',monospace; font-size:.65rem; letter-spacing:.14em;
-  }
+  .listing-card .badge{ font-family:'IBM Plex Mono',monospace; font-size:.65rem; letter-spacing:.14em; }
 
-  /* ============ Marquee ============ */
-  .marquee-track{ display:flex; width:max-content; animation: marquee 32s linear infinite; }
+  /* ============ Marquee (transform-only, GPU-cheap) ============ */
+  .marquee-track{ display:flex; width:max-content; animation: marquee 32s linear infinite; will-change:transform; }
   @keyframes marquee{ from{ transform:translateX(0);} to{ transform:translateX(-50%);} }
 
-  /* ============ FAQ (native details/summary — accessible by default) ============ */
+  /* ============ FAQ (native details/summary) ============ */
   details.faq-item{ border-bottom:1px solid var(--line); }
   details.faq-item summary{ list-style:none; cursor:pointer; }
   details.faq-item summary::-webkit-details-marker{ display:none; }
-  details.faq-item .chev{ transition: transform .35s var(--ease-luxury); }
+  details.faq-item .chev{ transition: transform .3s var(--ease-luxury); }
   details.faq-item[open] .chev{ transform: rotate(45deg); }
   details.faq-item .faq-body{
-    max-height:0; overflow:hidden; transition: max-height .45s var(--ease-luxury), opacity .3s ease, margin .3s ease;
+    max-height:0; overflow:hidden; transition: max-height .4s var(--ease-luxury), opacity .25s ease;
     opacity:0;
   }
   details.faq-item[open] .faq-body{ max-height:280px; opacity:1; }
 
-  /* ============ Loader ============ */
+  /* ============ Premium preloader ============ */
   #loader{ position:fixed; inset:0; z-index:100; background:var(--obsidian); display:flex; align-items:center; justify-content:center; }
-  #loader svg{ transform:rotate(-90deg); }
+  .loader-inner{ display:flex; flex-direction:column; align-items:center; }
+  .loader-word{
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:2.4rem; letter-spacing:.4em;
+    color:var(--ivory); opacity:0; padding-left:.4em; /* optical centering for the added tracking */
+  }
+  .loader-line-track{ width:180px; height:1px; background:rgba(241,236,227,0.12); margin-top:1.4rem; overflow:hidden; }
+  .loader-line-fill{ width:100%; height:100%; background:var(--brass); transform:scaleX(0); transform-origin:left center; }
+  .loader-tag{ margin-top:1rem; opacity:0; }
 
   /* ============ Custom cursor (desktop, motion-safe only) ============ */
   #cursor-dot{
@@ -186,24 +213,31 @@
   }
   .skip-link:focus{ top:1rem; }
 
-  /* ============ Reveal helpers (progressive enhancement; JS adds .revealed) ============ */
-  .reveal{ opacity:0; transform:translateY(28px); }
-  .reveal.revealed{ opacity:1; transform:translateY(0); transition: opacity .9s var(--ease-luxury), transform .9s var(--ease-luxury); }
+  /* ============ Reveal (IntersectionObserver toggles .revealed; pure CSS transition, no JS animation loop) ============ */
+  .reveal{ opacity:0; transform:translateY(20px); }
+  .reveal.revealed{ opacity:1; transform:translateY(0); transition: opacity .6s var(--ease-luxury), transform .6s var(--ease-luxury); }
 
-  /* ============ Journey beats ============ */
-  .journey-beat{ position:absolute; inset:0; display:flex; align-items:center; opacity:0; pointer-events:none; transition:none; }
-  .journey-beat.active{ opacity:1; }
+  /* ============ Journey beats (sticky/pinned "Why Ahadu" counter) ============ */
+  .journey-beat{ position:absolute; inset:0; display:flex; align-items:center; opacity:0; pointer-events:none; }
+  .journey-beat.active{ opacity:1; transition: opacity .5s ease; }
+  .journey-num{
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:clamp(4rem,14vw,10rem);
+    color:transparent; -webkit-text-stroke:1px rgba(212,166,62,0.35); line-height:1; position:absolute;
+    right:2vw; bottom:-2vh; z-index:-1; user-select:none;
+  }
 
-  /* ============ Reduced motion ============ */
+  /* ============ Reduced motion & low-end safety ============ */
   @media (prefers-reduced-motion: reduce){
     .reveal{ opacity:1 !important; transform:none !important; }
     .marquee-track{ animation:none !important; }
+    .hero-sweep::after{ animation:none !important; }
     #cursor-dot, #cursor-ring{ display:none !important; }
     *{ scroll-behavior:auto !important; }
   }
 
   @media (max-width: 767px){
     #cursor-dot, #cursor-ring{ display:none; }
+    .hero-car{ width:80vw; opacity:.12; right:-10%; bottom:2%; }
   }
 </style>
 </head>
@@ -212,22 +246,22 @@
 
 <a href="#main-content" class="skip-link">Skip to content</a>
 
-<!-- ============================================================ LOADER ============================================================ -->
+<!-- ============================================================ PREMIUM PRELOADER ============================================================ -->
 <div id="loader" aria-hidden="true">
-  <svg width="120" height="120" viewBox="0 0 120 120">
-    <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(241,236,227,0.08)" stroke-width="2"></circle>
-    <circle id="loader-ring" cx="60" cy="60" r="52" fill="none" stroke="#D4A63E" stroke-width="2"
-      stroke-dasharray="327" stroke-dashoffset="327" stroke-linecap="round"></circle>
-  </svg>
-  <div class="absolute font-plex text-ivory text-sm tracking-widest" id="loader-pct">0%</div>
-  <div class="absolute mt-24 font-display text-xs tracking-[0.3em] text-brass uppercase">Ahadu</div>
+  <div class="loader-inner">
+    <span class="loader-word">AHADU</span>
+    <div class="loader-line-track"><div class="loader-line-fill"></div></div>
+    <span class="loader-tag eyebrow !text-[0.62rem]">Car Market</span>
+  </div>
 </div>
 
-<!-- ============================================================ ATMOSPHERE LAYERS ============================================================ -->
-<canvas id="bg-canvas"></canvas>
+<!-- ============================================================ ATMOSPHERE (static CSS/SVG — no WebGL) ============================================================ -->
+<div class="auto-bg" aria-hidden="true">
+  <div class="auto-bg-glow"></div>
+  <div class="auto-bg-floor"></div>
+</div>
 <div class="blueprint-grid"></div>
 <div class="vignette"></div>
-<div class="film-grain"></div>
 <div id="cursor-dot"></div>
 <div id="cursor-ring"></div>
 
@@ -248,7 +282,7 @@
     </nav>
 
     <div class="flex items-center gap-4">
-      <a href="#cta" class="hidden md:inline-flex btn-brass !py-2.5 !px-5 text-sm">Book a Test Drive</a>
+      <a href="tel:0955555557" class="hidden md:inline-flex btn-brass !py-2.5 !px-5 text-sm">Call Now</a>
       <button id="menu-toggle" class="lg:hidden w-10 h-10 flex flex-col items-center justify-center gap-1.5" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
         <span class="w-6 h-px bg-ivory"></span>
         <span class="w-6 h-px bg-ivory"></span>
@@ -258,45 +292,58 @@
 </header>
 
 <!-- Mobile menu overlay -->
-<div id="mobile-menu" class="fixed inset-0 z-40 bg-obsidian/98 backdrop-blur-xl flex flex-col items-center justify-center gap-8 translate-y-[-100%] opacity-0 lg:hidden" aria-hidden="true">
+<div id="mobile-menu" class="fixed inset-0 z-40 bg-obsidian/98 flex flex-col items-center justify-center gap-8 translate-y-[-100%] opacity-0 lg:hidden" aria-hidden="true">
   <nav class="flex flex-col items-center gap-8 font-display text-2xl" aria-label="Mobile">
     <a href="#inventory" class="mobile-link">Inventory</a>
     <a href="#process" class="mobile-link">How It Works</a>
     <a href="#features" class="mobile-link">Financing</a>
     <a href="#proof" class="mobile-link">About</a>
     <a href="#faq" class="mobile-link">FAQ</a>
-    <a href="#cta" class="mobile-link text-brass">Book a Test Drive</a>
+    <a href="tel:0955555557" class="mobile-link text-brass">Call Now</a>
   </nav>
 </div>
 
 <main id="main-content">
 
   <!-- ============================================================ HERO ============================================================ -->
-   <section id="hero" class="relative min-h-[100svh] flex flex-col justify-center px-6 md:px-10">
-    <div class="max-w-7xl mx-auto w-full">
+  <section id="hero" class="relative min-h-[100svh] flex flex-col justify-center px-6 md:px-10 overflow-hidden">
+    <div class="hero-sweep" aria-hidden="true"></div>
+    <div class="hero-car" aria-hidden="true">
+      <svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="carGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#E8C468" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="#8C6F28" stop-opacity="0.1"/>
+          </linearGradient>
+        </defs>
+        <path fill="url(#carGrad)" d="M40,170 C40,150 60,140 90,138 L150,100 C170,86 200,80 230,80 L360,80 C400,80 430,90 455,108 L520,138 C550,140 565,150 565,170 L565,178 L520,178 C518,158 500,145 480,145 C460,145 442,158 440,178 L170,178 C168,158 150,145 130,145 C110,145 92,158 90,178 L40,178 Z"/>
+        <circle cx="130" cy="178" r="26" fill="#08080a" stroke="url(#carGrad)" stroke-width="4"/>
+        <circle cx="480" cy="178" r="26" fill="#08080a" stroke="url(#carGrad)" stroke-width="4"/>
+      </svg>
+    </div>
+
+    <div class="max-w-7xl mx-auto w-full relative">
+      <p class="eyebrow reveal mb-6">Ethiopia's Premier Vehicle Dealership</p>
       <h1 class="font-display reveal text-[2.6rem] leading-[1.02] sm:text-6xl md:text-7xl lg:text-8xl font-semibold max-w-5xl">
         Every road<br><span class="text-brass">starts with trust.</span>
       </h1>
-      <p class="eyebrow reveal mt-6 mb-6">Ethiopia's Premier Vehicle Dealership</p>
       <p class="reveal mt-8 max-w-xl text-ivory-dim text-lg leading-relaxed">
         175-point inspections, transparent Birr pricing, and financing built for how Addis actually drives.
-        Browse verified vehicles from Bole to Bahir Dar.
+        Browse vehicles from Bole to Bahir Dar, sold directly by Ahadu.
       </p>
       <div class="reveal mt-10 flex flex-wrap items-center gap-4">
         <a href="#inventory" class="btn-brass">Browse Inventory</a>
-        <a href="#cta" class="btn-ghost">Schedule a Viewing</a>
+        <a href="tel:0955555557" class="btn-ghost">Call 0955 555 557</a>
       </div>
-    </div>
-  </section>
 
-
-    <!-- Data strip: mono, not gradient-card — the dealership's operational proof -->
-    <div class="reveal max-w-7xl mx-auto w-full mt-20 md:mt-28 border-t border-line pt-6">
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-6 font-plex text-xs sm:text-sm text-ivory-dim uppercase tracking-wider">
-        <div><span class="text-brass text-xl block font-medium tracking-normal">3,600+</span>Vehicles Delivered</div>
-        <div><span class="text-brass text-xl block font-medium tracking-normal">11</span>Cities Covered</div>
-        <div><span class="text-brass text-xl block font-medium tracking-normal">48hr</span>Avg. Delivery</div>
-        <div><span class="text-brass text-xl block font-medium tracking-normal">4.8/5</span>Buyer Rating</div>
+      <!-- Data strip: mono, not gradient-card — the dealership's operational proof -->
+      <div class="reveal max-w-7xl w-full mt-20 md:mt-28 border-t border-line pt-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 font-plex text-xs sm:text-sm text-ivory-dim uppercase tracking-wider">
+          <div><span class="text-brass text-xl block font-medium tracking-normal">3,600+</span>Vehicles Delivered</div>
+          <div><span class="text-brass text-xl block font-medium tracking-normal">11</span>Cities Covered</div>
+          <div><span class="text-brass text-xl block font-medium tracking-normal">48hr</span>Avg. Delivery</div>
+          <div><span class="text-brass text-xl block font-medium tracking-normal">4.8/5</span>Buyer Rating</div>
+        </div>
       </div>
     </div>
 
@@ -306,9 +353,10 @@
     </div>
   </section>
 
-  <!-- ============================================================ JOURNEY (pinned cinematic dolly) ============================================================ -->
+  <!-- ============================================================ JOURNEY — pinned "Why Ahadu" counter (01→04), sits right before Features ============================================================ -->
   <section id="journey" class="relative h-[100svh] px-6 md:px-10 overflow-hidden">
     <div class="max-w-7xl mx-auto h-full relative">
+      <span class="journey-num" data-num="0">01</span>
       <div class="journey-beat active" data-beat="0">
         <div class="max-w-lg">
           <span class="font-plex text-brass text-xs tracking-[0.3em]">01 — INSPECTED</span>
@@ -348,7 +396,7 @@
     </div>
   </section>
 
-  <!-- ============================================================ FEATURES ============================================================ -->
+  <!-- ============================================================ FEATURES / WHY AHADU ============================================================ -->
   <section id="features" class="relative py-28 md:py-36 px-6 md:px-10">
     <div class="max-w-7xl mx-auto">
       <div class="max-w-2xl">
@@ -357,7 +405,6 @@
       </div>
 
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-px mt-16 bg-line">
-        <!-- feature card template x6 -->
         <div class="feature-card tilt-card reveal p-8 bg-obsidian">
           <svg class="w-8 h-8 text-brass mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
           <h3 class="font-display text-xl">Certified 175-Point Inspection</h3>
@@ -440,7 +487,6 @@
       </div>
 
       <div id="inventory-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-14">
-        <!-- Card 1 -->
         <article class="listing-card tilt-card reveal rounded-sm overflow-hidden" data-category="sedan">
           <div class="h-40 bg-gradient-to-br from-obsidian-3 to-obsidian-2 flex items-center justify-center border-b border-line">
             <svg viewBox="0 0 120 48" class="w-2/3 opacity-70" fill="none" stroke="#D4A63E" stroke-width="1.2"><path d="M8 34h4l6-12h60l10 12h6"/><rect x="18" y="22" width="60" height="12" rx="2"/><circle cx="30" cy="36" r="6"/><circle cx="88" cy="36" r="6"/></svg>
@@ -454,12 +500,11 @@
             <p class="text-ivory-dim text-sm mt-1">42,000 km · Automatic · Addis Ababa</p>
             <div class="mt-5 flex items-end justify-between">
               <span class="font-plex text-brass text-lg price-count" data-target="1450000">ETB 0</span>
-              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Enquire to Purchase →</a>
+              <a href="tel:0955555557" class="text-sm text-ivory-dim hover:text-brass transition-colors">Enquire to Purchase →</a>
             </div>
           </div>
         </article>
 
-        <!-- Card 2 -->
         <article class="listing-card tilt-card reveal rounded-sm overflow-hidden" data-category="suv">
           <div class="h-40 bg-gradient-to-br from-obsidian-3 to-obsidian-2 flex items-center justify-center border-b border-line">
             <svg viewBox="0 0 120 48" class="w-2/3 opacity-70" fill="none" stroke="#1F7A5C" stroke-width="1.2"><path d="M6 34h6l8-16h56l14 16h6"/><rect x="16" y="18" width="66" height="16" rx="2"/><circle cx="30" cy="36" r="6"/><circle cx="88" cy="36" r="6"/></svg>
@@ -473,12 +518,11 @@
             <p class="text-ivory-dim text-sm mt-1">61,500 km · Automatic · Adama</p>
             <div class="mt-5 flex items-end justify-between">
               <span class="font-plex text-brass text-lg price-count" data-target="3180000">ETB 0</span>
-              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Enquire to Purchase →</a>
+              <a href="tel:0955555557" class="text-sm text-ivory-dim hover:text-brass transition-colors">Enquire to Purchase →</a>
             </div>
           </div>
         </article>
 
-        <!-- Card 3 -->
         <article class="listing-card tilt-card reveal rounded-sm overflow-hidden" data-category="suv">
           <div class="h-40 bg-gradient-to-br from-obsidian-3 to-obsidian-2 flex items-center justify-center border-b border-line">
             <svg viewBox="0 0 120 48" class="w-2/3 opacity-70" fill="none" stroke="#D4A63E" stroke-width="1.2"><path d="M4 34h6l9-17h58l15 17h6"/><rect x="15" y="17" width="70" height="17" rx="2"/><circle cx="30" cy="36" r="6.5"/><circle cx="90" cy="36" r="6.5"/></svg>
@@ -492,12 +536,11 @@
             <p class="text-ivory-dim text-sm mt-1">78,200 km · Automatic · Bahir Dar</p>
             <div class="mt-5 flex items-end justify-between">
               <span class="font-plex text-brass text-lg price-count" data-target="6420000">ETB 0</span>
-              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Enquire to Purchase →</a>
+              <a href="tel:0955555557" class="text-sm text-ivory-dim hover:text-brass transition-colors">Enquire to Purchase →</a>
             </div>
           </div>
         </article>
 
-        <!-- Card 4 -->
         <article class="listing-card tilt-card reveal rounded-sm overflow-hidden" data-category="sedan">
           <div class="h-40 bg-gradient-to-br from-obsidian-3 to-obsidian-2 flex items-center justify-center border-b border-line">
             <svg viewBox="0 0 120 48" class="w-2/3 opacity-70" fill="none" stroke="#1F7A5C" stroke-width="1.2"><path d="M8 34h4l6-11h58l9 11h6"/><rect x="18" y="23" width="58" height="11" rx="2"/><circle cx="30" cy="36" r="6"/><circle cx="86" cy="36" r="6"/></svg>
@@ -511,12 +554,11 @@
             <p class="text-ivory-dim text-sm mt-1">18,900 km · Manual · Hawassa</p>
             <div class="mt-5 flex items-end justify-between">
               <span class="font-plex text-brass text-lg price-count" data-target="1120000">ETB 0</span>
-              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Enquire to Purchase →</a>
+              <a href="tel:0955555557" class="text-sm text-ivory-dim hover:text-brass transition-colors">Enquire to Purchase →</a>
             </div>
           </div>
         </article>
 
-        <!-- Card 5 -->
         <article class="listing-card tilt-card reveal rounded-sm overflow-hidden" data-category="truck">
           <div class="h-40 bg-gradient-to-br from-obsidian-3 to-obsidian-2 flex items-center justify-center border-b border-line">
             <svg viewBox="0 0 120 48" class="w-2/3 opacity-70" fill="none" stroke="#D4A63E" stroke-width="1.2"><path d="M4 34h4l7-15h34v15M60 34h50l-8-12h-16v12"/><circle cx="26" cy="36" r="6.5"/><circle cx="94" cy="36" r="6.5"/></svg>
@@ -530,12 +572,11 @@
             <p class="text-ivory-dim text-sm mt-1">96,000 km · Manual · Mekelle</p>
             <div class="mt-5 flex items-end justify-between">
               <span class="font-plex text-brass text-lg price-count" data-target="3950000">ETB 0</span>
-              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Enquire to Purchase →</a>
+              <a href="tel:0955555557" class="text-sm text-ivory-dim hover:text-brass transition-colors">Enquire to Purchase →</a>
             </div>
           </div>
         </article>
 
-        <!-- Card 6 -->
         <article class="listing-card tilt-card reveal rounded-sm overflow-hidden" data-category="suv">
           <div class="h-40 bg-gradient-to-br from-obsidian-3 to-obsidian-2 flex items-center justify-center border-b border-line">
             <svg viewBox="0 0 120 48" class="w-2/3 opacity-70" fill="none" stroke="#1F7A5C" stroke-width="1.2"><path d="M6 34h6l8-15h56l13 15h6"/><rect x="17" y="19" width="64" height="15" rx="2"/><circle cx="30" cy="36" r="6"/><circle cx="88" cy="36" r="6"/></svg>
@@ -549,7 +590,7 @@
             <p class="text-ivory-dim text-sm mt-1">33,400 km · Automatic · Addis Ababa</p>
             <div class="mt-5 flex items-end justify-between">
               <span class="font-plex text-brass text-lg price-count" data-target="4380000">ETB 0</span>
-              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Enquire to Purchase →</a>
+              <a href="tel:0955555557" class="text-sm text-ivory-dim hover:text-brass transition-colors">Enquire to Purchase →</a>
             </div>
           </div>
         </article>
@@ -578,7 +619,6 @@
         </blockquote>
       </div>
 
-      <!-- partner marquee -->
       <div class="reveal mt-20 overflow-hidden">
         <div class="marquee-track gap-16 font-display text-xl text-ivory-dim/50 uppercase tracking-widest">
           <span class="px-8">Awash Bank</span><span class="px-8">Dashen Bank</span><span class="px-8">Wegagen</span><span class="px-8">Hibret Bank</span><span class="px-8">Oromia Insurance</span><span class="px-8">Nib Bank</span>
@@ -634,50 +674,45 @@
     </div>
   </section>
 
-  <!-- ============================================================ FINAL CTA ============================================================ -->
-  <section id="cta" class="relative py-28 md:py-36 px-6 md:px-10 border-t border-line">
-    <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-start">
-      <div class="reveal">
-        <p class="eyebrow">Ready When You Are</p>
-        <h2 class="font-display text-4xl md:text-5xl mt-4 leading-tight">Find your next car today.</h2>
-        <p class="text-ivory-dim mt-6 max-w-md leading-relaxed">Tell us what you're looking for and a certified advisor will call you within one business day — no pressure, no obligation.</p>
+  <!-- ============================================================ FINAL CTA — call-first, frictionless ============================================================ -->
+  <section id="cta" class="relative py-28 md:py-36 px-6 md:px-10 border-t border-line overflow-hidden">
+    <div class="max-w-2xl mx-auto text-center">
+      <p class="eyebrow reveal">Talk To Us Directly</p>
+      <h2 class="font-display reveal text-4xl md:text-6xl mt-4 leading-tight">One call.<br>Zero pressure.</h2>
+      <p class="reveal text-ivory-dim mt-6 max-w-md mx-auto leading-relaxed">
+        Our sales advisors are on the line now. Call directly, or leave your number and we'll call you back within the hour.
+      </p>
+
+      <div class="reveal mt-10 flex flex-col items-center gap-4">
+        <a href="tel:0955555557" class="btn-brass !text-xl md:!text-2xl !px-10 !py-5">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.79.65 2.65a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.43-1.27a2 2 0 0 1 2.11-.45c.86.31 1.75.53 2.65.65A2 2 0 0 1 22 16.92z"/></svg>
+          0955 555 557
+        </a>
+        <span class="font-plex text-xs text-ivory-dim tracking-widest uppercase">Showroom Hours — Mon–Sat, 9:00–18:00 · Bole, Addis Ababa</span>
       </div>
 
-      <form id="lead-form" class="reveal glass p-8 rounded-sm" novalidate>
-        <div id="form-success" class="hidden text-center py-10">
-          <svg class="w-10 h-10 mx-auto text-brass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg>
-          <p class="font-display text-xl mt-4">Request received.</p>
-          <p class="text-ivory-dim text-sm mt-2">An Ahadu advisor will call you within one business day.</p>
-        </div>
+      <div class="reveal mt-14 max-w-sm mx-auto">
+        <div class="h-px w-full bg-line mb-8"></div>
+        <p class="text-sm text-ivory-dim mb-4">Prefer we call you?</p>
 
-        <div id="form-fields" class="space-y-5">
-          <div>
-            <label for="f-name" class="text-xs font-plex tracking-widest text-ivory-dim uppercase">Full Name</label>
-            <input id="f-name" name="name" type="text" required class="mt-2 w-full bg-transparent border border-line focus:border-brass rounded-sm px-4 py-3 text-ivory placeholder:text-ivory-dim/40 transition-colors" placeholder="Abebe Kebede">
-            <p class="field-error hidden text-rust text-xs mt-1">Please enter your name.</p>
+        <form id="lead-form" novalidate>
+          <div id="form-success" class="hidden text-center py-4">
+            <svg class="w-8 h-8 mx-auto text-brass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg>
+            <p class="font-display text-lg mt-3">We've got it.</p>
+            <p class="text-ivory-dim text-sm mt-1">An Ahadu advisor will call you within the hour.</p>
           </div>
-          <div>
-            <label for="f-phone" class="text-xs font-plex tracking-widest text-ivory-dim uppercase">Phone Number</label>
-            <input id="f-phone" name="phone" type="tel" required class="mt-2 w-full bg-transparent border border-line focus:border-brass rounded-sm px-4 py-3 text-ivory placeholder:text-ivory-dim/40 transition-colors" placeholder="+251 9__ ___ ___">
-            <p class="field-error hidden text-rust text-xs mt-1">Please enter a valid phone number.</p>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label for="f-city" class="text-xs font-plex tracking-widest text-ivory-dim uppercase">City</label>
-              <select id="f-city" name="city" class="mt-2 w-full bg-obsidian-2 border border-line focus:border-brass rounded-sm px-4 py-3 text-ivory transition-colors">
-                <option>Addis Ababa</option><option>Adama</option><option>Bahir Dar</option><option>Hawassa</option><option>Mekelle</option><option>Other</option>
-              </select>
+
+          <div id="form-fields" class="flex gap-2">
+            <div class="flex-1">
+              <input id="f-phone" name="phone" type="tel" required autocomplete="tel"
+                class="w-full bg-transparent border border-line focus:border-brass rounded-sm px-4 py-3 text-ivory text-center placeholder:text-ivory-dim/40 transition-colors"
+                placeholder="09xx xxx xxx" aria-label="Your phone number">
+              <p class="field-error hidden text-rust text-xs mt-1">Enter a valid phone number.</p>
             </div>
-            <div>
-              <label for="f-type" class="text-xs font-plex tracking-widest text-ivory-dim uppercase">Interested In</label>
-              <select id="f-type" name="type" class="mt-2 w-full bg-obsidian-2 border border-line focus:border-brass rounded-sm px-4 py-3 text-ivory transition-colors">
-                <option>Sedan</option><option>SUV</option><option>Truck</option><option>Any</option>
-              </select>
-            </div>
+            <button type="submit" class="btn-brass !px-6 whitespace-nowrap">Call Me Back</button>
           </div>
-          <button type="submit" class="btn-brass w-full mt-2">Request a Call </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   </section>
 
@@ -689,7 +724,7 @@
     <div class="lg:col-span-2">
       <span class="font-display text-2xl text-ivory">AHADU</span>
       <p class="text-ivory-dim text-sm mt-4 max-w-xs leading-relaxed">Ethiopia's premier direct vehicle dealership. Inspected, priced honestly, financed for real life.</p>
-      <p class="text-ivory text-sm font-medium mt-4">Contact: <a href="tel:0955555557" class="text-brass hover:underline">0955555557</a></p>
+      <p class="text-ivory text-sm font-medium mt-4">Call us: <a href="tel:0955555557" class="text-brass hover:underline">0955 555 557</a></p>
       <div class="flex gap-4 mt-6" aria-label="Social media">
         <a href="https://t.me/kal1414kh" target="_blank" rel="noopener noreferrer" aria-label="Telegram" class="w-9 h-9 border border-line rounded-full flex items-center justify-center hover:border-brass transition-colors"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M21 4L2.5 11.3c-1 .4-1 1.6.1 1.9l4.6 1.5 1.8 5.6c.3.9 1.4 1.1 2 .4l2.6-2.7 4.9 3.6c.8.6 2 .2 2.2-.8L23 4.9c.2-.9-.7-1.5-2-.9z"/></svg></a>
         <a href="https://www.tiktok.com/@kal14kh?_r=1&_t=ZS-98ReGN5PZWU" target="_blank" rel="noopener noreferrer" aria-label="TikTok" class="w-9 h-9 border border-line rounded-full flex items-center justify-center hover:border-brass transition-colors"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z"/></svg></a>
@@ -737,46 +772,38 @@
      0. ENVIRONMENT FLAGS
   ========================================================================= */
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var isMobile = window.matchMedia('(max-width: 767px)').matches;
   var isTouch = 'ontouchstart' in window;
 
   gsap.registerPlugin(ScrollTrigger);
 
   /* =========================================================================
-     1. LOADER — minimum-perceived-quality gate so the 3D scene never pops in
+     1. PREMIUM PRELOADER — a short, motion-only brand reveal (no percentage
+        counter, no simulated progress timer running in the background).
+        Plays immediately; fades out once the page has actually loaded AND
+        a minimum, deliberately brief, display time has elapsed.
   ========================================================================= */
   var loaderEl = document.getElementById('loader');
-  var loaderRing = document.getElementById('loader-ring');
-  var loaderPct = document.getElementById('loader-pct');
   document.documentElement.classList.add('lock-scroll');
 
-  var loadProgress = 0;
-  var loadTimer = setInterval(function(){
-    loadProgress += (100 - loadProgress) * 0.12 + 1;
-    if (loadProgress > 99) loadProgress = 99;
-    paintLoader(loadProgress);
-  }, 90);
-
-  function paintLoader(p){
-    var circumference = 327;
-    loaderRing.style.strokeDashoffset = String(circumference - (circumference * p / 100));
-    loaderPct.textContent = Math.floor(p) + '%';
+  if (!reduceMotion){
+    gsap.timeline()
+      .to('.loader-word', { opacity: 1, letterSpacing: '0.5em', duration: 0.7, ease: 'power3.out' })
+      .to('.loader-line-fill', { scaleX: 1, duration: 0.55, ease: 'power2.inOut' }, '-=0.25')
+      .to('.loader-tag', { opacity: 0.8, duration: 0.4 }, '-=0.2');
+  } else {
+    document.querySelectorAll('.loader-word, .loader-tag').forEach(function(el){ el.style.opacity = 1; });
+    document.querySelector('.loader-line-fill').style.transform = 'scaleX(1)';
   }
 
-  window.addEventListener('load', function(){
-    setTimeout(finishLoading, 500); // minimum perceived polish time
-  });
-  // Fallback in case 'load' is slow/blocked
-  setTimeout(finishLoading, 4000);
-
   var loaderDone = false;
+  var startedAt = Date.now();
+  var MIN_DISPLAY = 900;
+
   function finishLoading(){
     if (loaderDone) return;
     loaderDone = true;
-    clearInterval(loadTimer);
-    paintLoader(100);
     gsap.to(loaderEl, {
-      opacity: 0, duration: 0.7, delay: 0.15, ease: 'power2.out',
+      opacity: 0, duration: 0.5, ease: 'power2.out',
       onComplete: function(){
         loaderEl.style.display = 'none';
         document.documentElement.classList.remove('lock-scroll');
@@ -785,31 +812,49 @@
       }
     });
   }
-
-  /* =========================================================================
-     2. REVEAL-ON-SCROLL (progressive enhancement over the .reveal base state)
-  ========================================================================= */
-  var revealEls = document.querySelectorAll('.reveal');
-  revealEls.forEach(function(el, i){
-    if (reduceMotion){ el.classList.add('revealed'); return; }
-    ScrollTrigger.create({
-      trigger: el,
-      start: 'top 88%',
-      onEnter: function(){ el.classList.add('revealed'); }
-    });
-  });
+  function scheduleFinish(){
+    var elapsed = Date.now() - startedAt;
+    setTimeout(finishLoading, Math.max(0, MIN_DISPLAY - elapsed));
+  }
+  window.addEventListener('load', scheduleFinish);
+  setTimeout(scheduleFinish, 2200); // safety fallback if 'load' is slow
 
   function playHeroIntro(){
-    var heroReveals = document.querySelectorAll('#hero .reveal');
-    heroReveals.forEach(function(el){ el.classList.add('revealed'); });
+    document.querySelectorAll('#hero .reveal').forEach(function(el){ el.classList.add('revealed'); });
+  }
+
+  /* =========================================================================
+     2. REVEAL-ON-SCROLL — a single IntersectionObserver for every .reveal
+        element (far cheaper than one ScrollTrigger per element).
+  ========================================================================= */
+  var revealTargets = document.querySelectorAll('.reveal');
+  if (reduceMotion || !('IntersectionObserver' in window)){
+    revealTargets.forEach(function(el){ el.classList.add('revealed'); });
+  } else {
+    var revealObserver = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting){
+          entry.target.classList.add('revealed');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+    revealTargets.forEach(function(el){
+      if (!el.closest('#hero')) revealObserver.observe(el); // hero reveals itself once the loader finishes
+      else revealObserver.observe(el);
+    });
   }
 
   /* =========================================================================
      3. NAV: scroll shading + mobile menu
   ========================================================================= */
   var nav = document.getElementById('site-nav');
+  var lastScrollState = false;
   window.addEventListener('scroll', function(){
-    if (window.scrollY > 40){
+    var shouldShade = window.scrollY > 40;
+    if (shouldShade === lastScrollState) return;
+    lastScrollState = shouldShade;
+    if (shouldShade){
       nav.classList.add('glass');
       nav.style.borderBottomColor = 'var(--line)';
     } else {
@@ -827,35 +872,35 @@
     mobileMenu.setAttribute('aria-hidden', String(!menuOpen));
     if (menuOpen){
       mobileMenu.style.pointerEvents = 'auto';
-      gsap.to(mobileMenu, { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out' });
+      gsap.to(mobileMenu, { y: 0, opacity: 1, duration: 0.4, ease: 'power3.out' });
       gsap.fromTo(mobileMenu.querySelectorAll('.mobile-link'),
-        { y: 20, opacity: 0 }, { y: 0, opacity: 1, stagger: 0.06, delay: 0.1, duration: 0.4 });
+        { y: 16, opacity: 0 }, { y: 0, opacity: 1, stagger: 0.05, delay: 0.08, duration: 0.35 });
     } else {
-      gsap.to(mobileMenu, { y: '-100%', opacity: 0, duration: 0.4, ease: 'power3.in',
+      gsap.to(mobileMenu, { y: '-100%', opacity: 0, duration: 0.35, ease: 'power3.in',
         onComplete: function(){ mobileMenu.style.pointerEvents = 'none'; } });
     }
   });
   mobileMenu.querySelectorAll('.mobile-link').forEach(function(a){
-    a.addEventListener('click', function(){ menuToggle.click(); });
+    a.addEventListener('click', function(){ if (menuOpen) menuToggle.click(); });
   });
 
   /* =========================================================================
-     4. CUSTOM CURSOR (desktop + motion-safe only — purely ambient, never blocks input)
+     4. CUSTOM CURSOR (desktop + motion-safe only)
   ========================================================================= */
-  if (!isTouch && !reduceMotion && !isMobile){
+  if (!isTouch && !reduceMotion){
     var dot = document.getElementById('cursor-dot');
     var ring = document.getElementById('cursor-ring');
     var setDot = gsap.quickTo(dot, 'x', { duration: 0.05, ease: 'none' });
     var setDotY = gsap.quickTo(dot, 'y', { duration: 0.05, ease: 'none' });
-    var setRing = gsap.quickTo(ring, 'x', { duration: 0.35, ease: 'power3.out' });
-    var setRingY = gsap.quickTo(ring, 'y', { duration: 0.35, ease: 'power3.out' });
+    var setRing = gsap.quickTo(ring, 'x', { duration: 0.3, ease: 'power3.out' });
+    var setRingY = gsap.quickTo(ring, 'y', { duration: 0.3, ease: 'power3.out' });
     window.addEventListener('mousemove', function(e){
       setDot(e.clientX); setDotY(e.clientY);
       setRing(e.clientX); setRingY(e.clientY);
     }, { passive: true });
     document.querySelectorAll('a, button, .tilt-card').forEach(function(el){
-      el.addEventListener('mouseenter', function(){ gsap.to(ring, { scale: 1.8, duration: 0.3 }); });
-      el.addEventListener('mouseleave', function(){ gsap.to(ring, { scale: 1, duration: 0.3 }); });
+      el.addEventListener('mouseenter', function(){ gsap.to(ring, { scale: 1.8, duration: 0.25 }); });
+      el.addEventListener('mouseleave', function(){ gsap.to(ring, { scale: 1, duration: 0.25 }); });
     });
   } else {
     var d = document.getElementById('cursor-dot'), r = document.getElementById('cursor-ring');
@@ -863,12 +908,12 @@
   }
 
   /* =========================================================================
-     5. TILT CARDS — subtle 3D hover, disabled on touch/reduced-motion
+     5. TILT CARDS — desktop only, disabled on touch/reduced-motion
   ========================================================================= */
   if (!isTouch && !reduceMotion){
     document.querySelectorAll('.tilt-card').forEach(function(card){
-      var rx = gsap.quickTo(card, 'rotationX', { duration: 0.5, ease: 'power3.out' });
-      var ry = gsap.quickTo(card, 'rotationY', { duration: 0.5, ease: 'power3.out' });
+      var rx = gsap.quickTo(card, 'rotationX', { duration: 0.4, ease: 'power3.out' });
+      var ry = gsap.quickTo(card, 'rotationY', { duration: 0.4, ease: 'power3.out' });
       card.style.perspective = '800px';
       card.addEventListener('mousemove', function(e){
         var b = card.getBoundingClientRect();
@@ -882,14 +927,12 @@
   }
 
   /* =========================================================================
-     6. FAQ — collapse siblings for a cleaner single-open accordion feel
+     6. FAQ — single-open accordion
   ========================================================================= */
   var faqItems = document.querySelectorAll('.faq-item');
   faqItems.forEach(function(item){
     item.addEventListener('toggle', function(){
-      if (item.open){
-        faqItems.forEach(function(other){ if (other !== item) other.open = false; });
-      }
+      if (item.open) faqItems.forEach(function(other){ if (other !== item) other.open = false; });
     });
   });
 
@@ -906,7 +949,7 @@
       var f = tab.getAttribute('data-filter');
       cards.forEach(function(card){
         var show = (f === 'all' || card.getAttribute('data-category') === f);
-        gsap.to(card, { opacity: show ? 1 : 0, scale: show ? 1 : 0.96, duration: 0.35, ease: 'power2.out',
+        gsap.to(card, { opacity: show ? 1 : 0, scale: show ? 1 : 0.96, duration: 0.3, ease: 'power2.out',
           onStart: function(){ if (show) card.style.display = ''; },
           onComplete: function(){ if (!show) card.style.display = 'none'; } });
       });
@@ -914,75 +957,69 @@
   });
 
   /* =========================================================================
-     8. PRICE COUNT-UP (Birr) — triggers once per card as it enters view
+     8. PRICE COUNT-UP (Birr) — IntersectionObserver, fires once per card
   ========================================================================= */
   function formatBirr(n){
     return 'ETB ' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   }
-  document.querySelectorAll('.price-count').forEach(function(el){
-    var target = parseFloat(el.getAttribute('data-target')) || 0;
-    ScrollTrigger.create({
-      trigger: el,
-      start: 'top 90%',
-      once: true,
-      onEnter: function(){
-        if (reduceMotion){ el.textContent = formatBirr(target); return; }
+  var priceEls = document.querySelectorAll('.price-count');
+  if (reduceMotion || !('IntersectionObserver' in window)){
+    priceEls.forEach(function(el){ el.textContent = formatBirr(parseFloat(el.getAttribute('data-target')) || 0); });
+  } else {
+    var priceObserver = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (!entry.isIntersecting) return;
+        var el = entry.target;
+        var target = parseFloat(el.getAttribute('data-target')) || 0;
         var obj = { v: 0 };
-        gsap.to(obj, {
-          v: target, duration: 1.6, ease: 'power2.out',
-          onUpdate: function(){ el.textContent = formatBirr(obj.v); }
-        });
-      }
-    });
-  });
+        gsap.to(obj, { v: target, duration: 1.3, ease: 'power2.out', onUpdate: function(){ el.textContent = formatBirr(obj.v); } });
+        priceObserver.unobserve(el);
+      });
+    }, { threshold: 0.4 });
+    priceEls.forEach(function(el){ priceObserver.observe(el); });
+  }
 
   /* =========================================================================
-     9. LEAD FORM — client-side validation + success state
+     9. CALL-BACK FORM — single phone field, minimal friction
   ========================================================================= */
   var form = document.getElementById('lead-form');
   form.addEventListener('submit', function(e){
     e.preventDefault();
-    var name = document.getElementById('f-name');
     var phone = document.getElementById('f-phone');
-    var valid = true;
-
-    if (!name.value.trim()){ showError(name); valid = false; } else { hideError(name); }
     var phoneOk = /^[0-9+\s-]{7,}$/.test(phone.value.trim());
-    if (!phoneOk){ showError(phone); valid = false; } else { hideError(phone); }
-
-    if (!valid) return;
+    if (!phoneOk){
+      phone.classList.add('!border-rust');
+      phone.parentElement.querySelector('.field-error').classList.remove('hidden');
+      return;
+    }
+    phone.classList.remove('!border-rust');
+    phone.parentElement.querySelector('.field-error').classList.add('hidden');
 
     var fields = document.getElementById('form-fields');
     var success = document.getElementById('form-success');
-    gsap.to(fields, { opacity: 0, y: -10, duration: 0.3, onComplete: function(){
+    gsap.to(fields, { opacity: 0, y: -8, duration: 0.25, onComplete: function(){
       fields.classList.add('hidden');
       success.classList.remove('hidden');
-      gsap.fromTo(success, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5 });
+      gsap.fromTo(success, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4 });
     }});
   });
-  function showError(input){
-    input.classList.add('!border-rust');
-    var msg = input.parentElement.querySelector('.field-error');
-    if (msg) msg.classList.remove('hidden');
-  }
-  function hideError(input){
-    input.classList.remove('!border-rust');
-    var msg = input.parentElement.querySelector('.field-error');
-    if (msg) msg.classList.add('hidden');
-  }
 
   /* =========================================================================
-     10. JOURNEY — pinned narrative beats (own local scroll progress)
+     10. JOURNEY — pinned "Why Ahadu" counter (01→04), right before Features.
+         Single ScrollTrigger for the whole pinned block; cheap per-scroll work.
   ========================================================================= */
   var beats = document.querySelectorAll('.journey-beat');
   var dots = document.querySelectorAll('.beat-dot');
+  var journeyNum = document.querySelector('.journey-num');
+  var beatLabels = ['01','02','03','04'];
+
   function setActiveBeat(idx){
     beats.forEach(function(b){ b.classList.toggle('active', parseInt(b.getAttribute('data-beat'),10) === idx); });
     dots.forEach(function(d){
       var active = parseInt(d.getAttribute('data-dot'),10) === idx;
       d.style.background = active ? 'var(--brass)' : 'var(--line)';
-      d.style.width = active ? '32px' : '32px';
     });
+    if (journeyNum) journeyNum.textContent = beatLabels[idx];
   }
   setActiveBeat(0);
 
@@ -993,295 +1030,16 @@
       end: '+=300%',
       pin: true,
       scrub: true,
+      anticipatePin: 1,
+      invalidateOnRefresh: true,
       onUpdate: function(self){
-        var idx = Math.min(3, Math.floor(self.progress * 4));
-        setActiveBeat(idx);
+        setActiveBeat(Math.min(3, Math.floor(self.progress * 4)));
       }
     });
   } else {
-    // reduced motion: stack beats simply as static readable blocks, no pin
     document.getElementById('journey').style.height = 'auto';
-    beats.forEach(function(b, i){
-      b.style.position = 'relative';
-      b.style.opacity = 1;
-      b.style.padding = '4rem 0';
-    });
+    beats.forEach(function(b){ b.style.position = 'relative'; b.style.opacity = 1; b.style.padding = '4rem 0'; });
   }
-
-  /* =========================================================================
-     11. GLOBAL SCROLL PROGRESS — drives the Three.js camera dolly (section 12)
-  ========================================================================= */
-  var sceneProgress = 0;
-  ScrollTrigger.create({
-    trigger: document.body,
-    start: 'top top',
-    end: 'bottom bottom',
-    scrub: 0.5,
-    onUpdate: function(self){ sceneProgress = self.progress; }
-  });
-
-  /* =========================================================================
-     12. THREE.JS — cinematic background: wireframe vehicle + particle field
-         Every element here is atmosphere in service of the scroll story,
-         not decoration: camera position = current chapter, particle density
-         = ambient depth, light color = mood shift between chapters.
-  ========================================================================= */
-  var canvas = document.getElementById('bg-canvas');
-  var renderer, scene, camera, carGroup, particles, keyLight, fillLight;
-  var rafId = null;
-  var sceneReady = false;
-
-  function initScene(){
-    if (!window.THREE) return;
-
-    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
-    renderer.setSize(window.innerWidth, window.innerHeight);
-
-    scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x08080A, 0.045);
-
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 1.3, 6);
-
-    // -- Lighting: brass key light (warm, "showroom"), emerald fill (depth, mood shift)
-    keyLight = new THREE.DirectionalLight(0xD4A63E, 1.1);
-    keyLight.position.set(4, 5, 3);
-    scene.add(keyLight);
-
-    fillLight = new THREE.PointLight(0x1F7A5C, 0.8, 20);
-    fillLight.position.set(-4, 1, -3);
-    scene.add(fillLight);
-
-    var ambient = new THREE.AmbientLight(0xF1ECE3, 0.18);
-    scene.add(ambient);
-
-    // -- Signature element: a brass wireframe/blueprint car built from primitives
-    carGroup = buildCarModel();
-    scene.add(carGroup);
-
-    // -- Particle field: ambient depth, road-dust drifting through the scene
-    particles = buildParticles();
-    scene.add(particles);
-
-    sceneReady = true;
-    animate();
-
-    window.addEventListener('resize', debounce(onResize, 150), { passive: true });
-    document.addEventListener('visibilitychange', onVisibilityChange);
-  }
-
-  function buildCarModel(){
-    var group = new THREE.Group();
-    var lineMat = new THREE.LineBasicMaterial({ color: 0xD4A63E, transparent: true, opacity: 0.9 });
-    var fillMat = new THREE.MeshBasicMaterial({ color: 0x1F7A5C, transparent: true, opacity: 0.05 });
-
-    function addEdged(geo, pos, rot){
-      var mesh = new THREE.Mesh(geo, fillMat);
-      var edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo), lineMat);
-      var wrap = new THREE.Group();
-      wrap.add(mesh); wrap.add(edges);
-      if (pos) wrap.position.set(pos[0], pos[1], pos[2]);
-      if (rot) wrap.rotation.set(rot[0], rot[1], rot[2]);
-      group.add(wrap);
-      return wrap;
-    }
-
-    // lower body
-    addEdged(new THREE.BoxGeometry(2.7, 0.5, 1.15), [0, 0, 0]);
-    // cabin
-    addEdged(new THREE.BoxGeometry(1.35, 0.5, 1.02), [-0.05, 0.5, 0]);
-    // hood taper (front)
-    addEdged(new THREE.BoxGeometry(0.6, 0.28, 1.0), [1.5, -0.02, 0]);
-    // trunk taper (rear)
-    addEdged(new THREE.BoxGeometry(0.5, 0.24, 1.0), [-1.45, -0.02, 0]);
-
-    // wheels + rims
-    var wheelPositions = [[0.95, -0.45, 0.62], [0.95, -0.45, -0.62], [-0.95, -0.45, 0.62], [-0.95, -0.45, -0.62]];
-    wheelPositions.forEach(function(p){
-      addEdged(new THREE.CylinderGeometry(0.36, 0.36, 0.22, 20), p, [0, 0, Math.PI/2]);
-      addEdged(new THREE.TorusGeometry(0.2, 0.045, 8, 20), p, [0, 0, Math.PI/2]);
-    });
-
-    group.scale.set(0.85, 0.85, 0.85);
-    group.position.y = -0.2;
-    return group;
-  }
-
-  function buildParticles(){
-    var count = isMobile ? 220 : 620;
-    var positions = new Float32Array(count * 3);
-    var colors = new Float32Array(count * 3);
-    var brass = new THREE.Color(0xD4A63E);
-    var emerald = new THREE.Color(0x1F7A5C);
-    var pts = [];
-
-    for (var i = 0; i < count; i++){
-      var x = (Math.random() - 0.5) * 24;
-      var y = (Math.random() - 0.5) * 14;
-      var z = (Math.random() - 0.5) * 20 - 4;
-      positions[i*3] = x; positions[i*3+1] = y; positions[i*3+2] = z;
-      pts.push(new THREE.Vector3(x, y, z));
-      var c = Math.random() > 0.5 ? brass : emerald;
-      colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
-    }
-    var geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-    var mat = new THREE.PointsMaterial({
-      size: 0.045, vertexColors: true, transparent: true, opacity: 0.7,
-      blending: THREE.AdditiveBlending, depthWrite: false
-    });
-    var points = new THREE.Points(geo, mat);
-
-    // Ambient "particle network": a one-time nearest-neighbor pass wires nearby
-    // points into faint connective lines — computed once (not per-frame) so it
-    // reads as a live network without costing anything in the render loop.
-    var linkPositions = [];
-    var maxDist = isMobile ? 2.2 : 2.6;
-    var neighborsToCheck = 10;
-    for (var a = 0; a < pts.length; a++){
-      for (var k = 1; k <= neighborsToCheck; k++){
-        var b = a + k;
-        if (b >= pts.length) break;
-        if (pts[a].distanceTo(pts[b]) < maxDist){
-          linkPositions.push(pts[a].x, pts[a].y, pts[a].z, pts[b].x, pts[b].y, pts[b].z);
-        }
-      }
-    }
-    var linkGeo = new THREE.BufferGeometry();
-    linkGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(linkPositions), 3));
-    var linkMat = new THREE.LineBasicMaterial({ color: 0xD4A63E, transparent: true, opacity: 0.12 });
-    var links = new THREE.LineSegments(linkGeo, linkMat);
-
-    var group = new THREE.Group();
-    group.add(points);
-    group.add(links);
-    return group;
-  }
-
-  // Camera keyframes: each maps a chapter of the scroll story to a shot.
-  var keyframes = [
-    { p: 0.00, cam: [0, 1.3, 6.0],   rot: 0.0,               col: 0xD4A63E },
-    { p: 0.20, cam: [3.1, 1.6, 4.1], rot: Math.PI * 0.5,     col: 0xD4A63E },
-    { p: 0.42, cam: [-3.3, 2.0, 3.5],rot: Math.PI * 1.1,     col: 0x1F7A5C },
-    { p: 0.60, cam: [0, 2.6, 5.4],   rot: Math.PI * 1.6,     col: 0x1F7A5C },
-    { p: 0.80, cam: [2.6, 1.2, 6.4], rot: Math.PI * 2.0,     col: 0xD4A63E },
-    { p: 1.00, cam: [0, 1.0, 8.4],   rot: Math.PI * 2.4,     col: 0xD4A63E }
-  ];
-
-  var targetCamPos = new THREE.Vector3(0, 1.3, 6.0);
-  var targetLookAt = new THREE.Vector3(0, 0.5, 0);
-  var targetCarRot = 0;
-  var currentCarRot = 0;
-  var targetLightHex = 0xD4A63E;
-  var clock = new THREE.Clock();
-
-  // Cursor reactivity: normalized (-1..1) pointer position, eased in the render
-  // loop (never applied 1:1) so the car and camera drift toward the cursor
-  // fluidly instead of snapping — this is the "reacts to cursor" requirement.
-  var mouseX = 0, mouseY = 0;
-  var easedMouseX = 0, easedMouseY = 0;
-  if (!isTouch){
-    window.addEventListener('mousemove', function(e){
-      mouseX = (e.clientX / window.innerWidth) * 2 - 1;
-      mouseY = (e.clientY / window.innerHeight) * 2 - 1;
-    }, { passive: true });
-  }
-
-  function updateKeyframeTargets(p){
-    var lo = keyframes[0], hi = keyframes[keyframes.length - 1];
-    for (var i = 0; i < keyframes.length - 1; i++){
-      if (p >= keyframes[i].p && p <= keyframes[i+1].p){ lo = keyframes[i]; hi = keyframes[i+1]; break; }
-    }
-    var span = (hi.p - lo.p) || 1;
-    var t = (p - lo.p) / span;
-    t = Math.max(0, Math.min(1, t));
-
-    targetCamPos.set(
-      lo.cam[0] + (hi.cam[0]-lo.cam[0]) * t,
-      lo.cam[1] + (hi.cam[1]-lo.cam[1]) * t,
-      lo.cam[2] + (hi.cam[2]-lo.cam[2]) * t
-    );
-    targetCarRot = lo.rot + (hi.rot - lo.rot) * t;
-    targetLightHex = t < 0.5 ? lo.col : hi.col;
-  }
-
-  function animate(){
-    rafId = requestAnimationFrame(animate);
-    var dt = clock.getDelta();
-
-    if (!reduceMotion){
-      updateKeyframeTargets(sceneProgress);
-    }
-
-    // Ease the raw cursor position — this is what makes the reaction feel
-    // fluid rather than jittery, and costs nothing (two lerps per frame).
-    if (!reduceMotion){
-      easedMouseX += (mouseX - easedMouseX) * 0.04;
-      easedMouseY += (mouseY - easedMouseY) * 0.04;
-    }
-
-    // Smooth camera dolly (decouples buttery motion from raw scroll jank),
-    // with a small cursor-driven offset layered on top of the current chapter.
-    var cursorOffsetX = reduceMotion ? 0 : easedMouseX * 0.5;
-    var cursorOffsetY = reduceMotion ? 0 : -easedMouseY * 0.25;
-    camera.position.x += ((targetCamPos.x + cursorOffsetX) - camera.position.x) * (reduceMotion ? 1 : 0.06);
-    camera.position.y += ((targetCamPos.y + cursorOffsetY) - camera.position.y) * (reduceMotion ? 1 : 0.06);
-    camera.position.z += (targetCamPos.z - camera.position.z) * (reduceMotion ? 1 : 0.06);
-    camera.lookAt(targetLookAt);
-
-    // Car rotation eases toward its target chapter angle, plus a subtle
-    // cursor-driven tilt so the model itself feels alive under the pointer.
-    currentCarRot += (targetCarRot - currentCarRot) * (reduceMotion ? 1 : 0.05);
-    if (carGroup){
-      carGroup.rotation.y = currentCarRot + (reduceMotion ? 0 : easedMouseX * 0.15);
-      var targetTiltX = reduceMotion ? 0 : easedMouseY * 0.06;
-      carGroup.rotation.x += (targetTiltX - carGroup.rotation.x) * (reduceMotion ? 1 : 0.08);
-    }
-
-    // Mood lighting cross-fade
-    if (keyLight){
-      keyLight.color.lerp(new THREE.Color(targetLightHex), 0.03);
-    }
-
-    // Ambient particle network drift — slow, continuous, never distracting
-    if (particles && !reduceMotion){
-      particles.rotation.y += dt * 0.015;
-      particles.position.y = Math.sin(clock.elapsedTime * 0.08) * 0.3;
-    }
-
-    renderer.render(scene, camera);
-  }
-
-  function onResize(){
-    if (!renderer || !camera) return;
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  }
-
-  function onVisibilityChange(){
-    if (document.hidden){
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = null;
-    } else if (sceneReady && !rafId){
-      clock.getDelta(); // discard the paused-time delta
-      animate();
-    }
-  }
-
-  function debounce(fn, wait){
-    var t;
-    return function(){
-      clearTimeout(t);
-      var args = arguments;
-      t = setTimeout(function(){ fn.apply(null, args); }, wait);
-    };
-  }
-
-  if (window.THREE){ initScene(); }
 
 })();
 </script>
