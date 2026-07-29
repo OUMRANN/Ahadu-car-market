@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Ahadu Car Market — Ethiopia's Certified Car Marketplace</title>
-<meta name="description" content="Ahadu Car Market — 175-point certified vehicles, transparent Birr pricing, and financing built for how Ethiopia drives.">
+<title>Ahadu Car Market — Ethiopia's Premier Vehicle Dealership</title>
+<meta name="description" content="Ahadu Car Market — Ethiopia's premier direct vehicle dealership. 175-point inspected cars, transparent Birr pricing, and financing, sold directly by Ahadu.">
 
 <!-- Fonts: Space Grotesk (display / structural voice), Inter (body / readable at speed), IBM Plex Mono (data, prices, specs) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,7 +18,7 @@
     theme: {
       extend: {
         colors: {
-          obsidian: { DEFAULT: '#0B0D10', 2: '#12151A', 3: '#191D22' },
+          obsidian: { DEFAULT: '#08080a', 2: '#101014', 3: '#17171c' },
           ivory: { DEFAULT: '#F1ECE3', dim: '#B9B3A6' },
           brass: { DEFAULT: '#D4A63E', dim: '#8C6F28', bright: '#E8C468' },
           emerald: { DEFAULT: '#123B2D', bright: '#1F7A5C' },
@@ -43,8 +43,8 @@
 <style>
   /* ============ DESIGN TOKENS (mirrored as CSS vars for JS + non-Tailwind use) ============ */
   :root{
-    --obsidian:#0B0D10;
-    --obsidian-2:#12151A;
+    --obsidian:#08080a;
+    --obsidian-2:#101014;
     --ivory:#F1ECE3;
     --brass:#D4A63E;
     --brass-bright:#E8C468;
@@ -241,7 +241,7 @@
 
     <nav class="hidden lg:flex items-center gap-10 font-display text-sm text-ivory/80" aria-label="Primary">
       <a href="#inventory" class="hover:text-brass transition-colors duration-300">Inventory</a>
-      <a href="#process" class="hover:text-brass transition-colors duration-300">Sell Your Car</a>
+      <a href="#process" class="hover:text-brass transition-colors duration-300">How It Works</a>
       <a href="#features" class="hover:text-brass transition-colors duration-300">Financing</a>
       <a href="#proof" class="hover:text-brass transition-colors duration-300">About</a>
       <a href="#faq" class="hover:text-brass transition-colors duration-300">FAQ</a>
@@ -261,7 +261,7 @@
 <div id="mobile-menu" class="fixed inset-0 z-40 bg-obsidian/98 backdrop-blur-xl flex flex-col items-center justify-center gap-8 translate-y-[-100%] opacity-0 lg:hidden" aria-hidden="true">
   <nav class="flex flex-col items-center gap-8 font-display text-2xl" aria-label="Mobile">
     <a href="#inventory" class="mobile-link">Inventory</a>
-    <a href="#process" class="mobile-link">Sell Your Car</a>
+    <a href="#process" class="mobile-link">How It Works</a>
     <a href="#features" class="mobile-link">Financing</a>
     <a href="#proof" class="mobile-link">About</a>
     <a href="#faq" class="mobile-link">FAQ</a>
@@ -274,7 +274,7 @@
   <!-- ============================================================ HERO ============================================================ -->
   <section id="hero" class="relative min-h-[100svh] flex flex-col justify-center px-6 md:px-10">
     <div class="max-w-7xl mx-auto w-full">
-      <p class="eyebrow reveal mb-6">Ethiopia's Certified Car Marketplace</p>
+      <p class="eyebrow reveal mb-6">Ethiopia's Premier Vehicle Dealership</p>
       <h1 class="font-display reveal text-[2.6rem] leading-[1.02] sm:text-6xl md:text-7xl lg:text-8xl font-semibold max-w-5xl">
         Every road<br><span class="text-brass">starts with trust.</span>
       </h1>
@@ -284,14 +284,14 @@
       </p>
       <div class="reveal mt-10 flex flex-wrap items-center gap-4">
         <a href="#inventory" class="btn-brass">Browse Inventory</a>
-        <a href="#process" class="btn-ghost">Sell Your Car</a>
+        <a href="#cta" class="btn-ghost">Schedule a Viewing</a>
       </div>
     </div>
 
-    <!-- Data strip: mono, not gradient-card — the marketplace's operational proof -->
+    <!-- Data strip: mono, not gradient-card — the dealership's operational proof -->
     <div class="reveal max-w-7xl mx-auto w-full mt-20 md:mt-28 border-t border-line pt-6">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-6 font-plex text-xs sm:text-sm text-ivory-dim uppercase tracking-wider">
-        <div><span class="text-brass text-xl block font-medium tracking-normal">2,400+</span>Verified Listings</div>
+        <div><span class="text-brass text-xl block font-medium tracking-normal">3,600+</span>Vehicles Delivered</div>
         <div><span class="text-brass text-xl block font-medium tracking-normal">11</span>Cities Covered</div>
         <div><span class="text-brass text-xl block font-medium tracking-normal">48hr</span>Avg. Delivery</div>
         <div><span class="text-brass text-xl block font-medium tracking-normal">4.8/5</span>Buyer Rating</div>
@@ -318,7 +318,7 @@
         <div class="max-w-lg ml-auto text-right">
           <span class="font-plex text-brass text-xs tracking-[0.3em]">02 — PRICED IN THE OPEN</span>
           <h2 class="font-display text-4xl md:text-6xl mt-4 leading-tight">No hidden fees.<br>No surprises.</h2>
-          <p class="text-ivory-dim mt-5 text-lg max-w-md ml-auto">The price on the listing is the price you sign for — in Birr, in full, upfront.</p>
+          <p class="text-ivory-dim mt-5 text-lg max-w-md ml-auto">The price on the vehicle page is the price you sign for — in Birr, in full, upfront.</p>
         </div>
       </div>
       <div class="journey-beat" data-beat="2">
@@ -364,7 +364,7 @@
         <div class="feature-card tilt-card reveal p-8 bg-obsidian">
           <svg class="w-8 h-8 text-brass mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
           <h3 class="font-display text-xl">Transparent Birr Pricing</h3>
-          <p class="text-ivory-dim mt-3 text-sm leading-relaxed">Every listing shows the full out-the-door price. No negotiation theater, no last-minute fees.</p>
+          <p class="text-ivory-dim mt-3 text-sm leading-relaxed">Every vehicle page shows the full out-the-door price. No negotiation theater, no last-minute fees.</p>
         </div>
         <div class="feature-card tilt-card reveal p-8 bg-obsidian">
           <svg class="w-8 h-8 text-brass mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="1"/><path d="M3 10h18"/></svg>
@@ -378,8 +378,8 @@
         </div>
         <div class="feature-card tilt-card reveal p-8 bg-obsidian">
           <svg class="w-8 h-8 text-brass mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M12 3v18M4 8l8-5 8 5M4 16l8 5 8-5"/></svg>
-          <h3 class="font-display text-xl">Instant Trade-In Valuation</h3>
-          <p class="text-ivory-dim mt-3 text-sm leading-relaxed">Get a real, honest valuation for your current car in minutes — applied straight to your upgrade.</p>
+          <h3 class="font-display text-xl">Trade-In Toward Your Purchase</h3>
+          <p class="text-ivory-dim mt-3 text-sm leading-relaxed">Ahadu appraises your current car in minutes and credits it straight toward any vehicle in our inventory.</p>
         </div>
         <div class="feature-card tilt-card reveal p-8 bg-obsidian">
           <svg class="w-8 h-8 text-brass mb-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/></svg>
@@ -404,8 +404,8 @@
         </div>
         <div class="reveal border-t border-brass pt-6">
           <span class="font-plex text-brass text-sm">02</span>
-          <h3 class="font-display text-lg mt-3">Schedule an Inspection</h3>
-          <p class="text-ivory-dim text-sm mt-2 leading-relaxed">Visit our Bole showroom or request the full 175-point report online.</p>
+          <h3 class="font-display text-lg mt-3">View the Vehicle &amp; Report</h3>
+          <p class="text-ivory-dim text-sm mt-2 leading-relaxed">Visit our Bole showroom or request the completed 175-point inspection report online.</p>
         </div>
         <div class="reveal border-t border-brass pt-6">
           <span class="font-plex text-brass text-sm">03</span>
@@ -452,7 +452,7 @@
             <p class="text-ivory-dim text-sm mt-1">42,000 km · Automatic · Addis Ababa</p>
             <div class="mt-5 flex items-end justify-between">
               <span class="font-plex text-brass text-lg price-count" data-target="1450000">ETB 0</span>
-              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Details →</a>
+              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Enquire to Purchase →</a>
             </div>
           </div>
         </article>
@@ -471,7 +471,7 @@
             <p class="text-ivory-dim text-sm mt-1">61,500 km · Automatic · Adama</p>
             <div class="mt-5 flex items-end justify-between">
               <span class="font-plex text-brass text-lg price-count" data-target="3180000">ETB 0</span>
-              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Details →</a>
+              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Enquire to Purchase →</a>
             </div>
           </div>
         </article>
@@ -490,7 +490,7 @@
             <p class="text-ivory-dim text-sm mt-1">78,200 km · Automatic · Bahir Dar</p>
             <div class="mt-5 flex items-end justify-between">
               <span class="font-plex text-brass text-lg price-count" data-target="6420000">ETB 0</span>
-              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Details →</a>
+              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Enquire to Purchase →</a>
             </div>
           </div>
         </article>
@@ -509,7 +509,7 @@
             <p class="text-ivory-dim text-sm mt-1">18,900 km · Manual · Hawassa</p>
             <div class="mt-5 flex items-end justify-between">
               <span class="font-plex text-brass text-lg price-count" data-target="1120000">ETB 0</span>
-              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Details →</a>
+              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Enquire to Purchase →</a>
             </div>
           </div>
         </article>
@@ -528,7 +528,7 @@
             <p class="text-ivory-dim text-sm mt-1">96,000 km · Manual · Mekelle</p>
             <div class="mt-5 flex items-end justify-between">
               <span class="font-plex text-brass text-lg price-count" data-target="3950000">ETB 0</span>
-              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Details →</a>
+              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Enquire to Purchase →</a>
             </div>
           </div>
         </article>
@@ -547,7 +547,7 @@
             <p class="text-ivory-dim text-sm mt-1">33,400 km · Automatic · Addis Ababa</p>
             <div class="mt-5 flex items-end justify-between">
               <span class="font-plex text-brass text-lg price-count" data-target="4380000">ETB 0</span>
-              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Details →</a>
+              <a href="#cta" class="text-sm text-ivory-dim hover:text-brass transition-colors">Enquire to Purchase →</a>
             </div>
           </div>
         </article>
@@ -567,7 +567,7 @@
           <cite class="not-italic font-plex text-xs text-brass block mt-4">— Selam T., Addis Ababa</cite>
         </blockquote>
         <blockquote class="reveal border-l-2 border-brass pl-6 py-2">
-          <p class="text-ivory-dim leading-relaxed">"Delivery to Hawassa took two days, exactly as promised. The car matched the listing down to the scratch on the bumper."</p>
+          <p class="text-ivory-dim leading-relaxed">"Delivery to Hawassa took two days, exactly as promised. The car matched the vehicle page down to the scratch on the bumper."</p>
           <cite class="not-italic font-plex text-xs text-brass block mt-4">— Dawit A., Hawassa</cite>
         </blockquote>
         <blockquote class="reveal border-l-2 border-brass pl-6 py-2">
@@ -616,17 +616,17 @@
         </details>
         <details class="faq-item py-6">
           <summary class="flex items-center justify-between gap-4">
-            <span class="font-display text-lg">Can I trade in my current car?</span>
+            <span class="font-display text-lg">Do you accept part-exchange on my current car?</span>
             <span class="chev font-plex text-brass text-xl">+</span>
           </summary>
-          <div class="faq-body text-ivory-dim text-sm leading-relaxed mt-3 pr-8">Yes. Submit your car's details for an instant estimate, then get a final valuation at inspection — applied directly toward your next purchase.</div>
+          <div class="faq-body text-ivory-dim text-sm leading-relaxed mt-3 pr-8">Yes. Ahadu appraises your current vehicle in-house and credits its value directly toward a vehicle from our inventory — we buy it as part of the deal, you never have to sell it yourself.</div>
         </details>
         <details class="faq-item py-6">
           <summary class="flex items-center justify-between gap-4">
             <span class="font-display text-lg">Can I see the full inspection report before buying?</span>
             <span class="chev font-plex text-brass text-xl">+</span>
           </summary>
-          <div class="faq-body text-ivory-dim text-sm leading-relaxed mt-3 pr-8">Every listing includes a downloadable 175-point report with photos, so you know exactly what you're buying before you visit.</div>
+          <div class="faq-body text-ivory-dim text-sm leading-relaxed mt-3 pr-8">Every vehicle page includes a downloadable 175-point report with photos, so you know exactly what you're buying before you visit.</div>
         </details>
       </div>
     </div>
@@ -686,7 +686,7 @@
   <div class="max-w-7xl mx-auto grid sm:grid-cols-2 lg:grid-cols-5 gap-10">
     <div class="lg:col-span-2">
       <span class="font-display text-2xl text-ivory">AHADU</span>
-      <p class="text-ivory-dim text-sm mt-4 max-w-xs leading-relaxed">Ethiopia's certified car marketplace. Inspected, priced honestly, financed for real life.</p>
+      <p class="text-ivory-dim text-sm mt-4 max-w-xs leading-relaxed">Ethiopia's premier direct vehicle dealership. Inspected, priced honestly, financed for real life.</p>
       <div class="flex gap-4 mt-6" aria-label="Social media">
         <a href="#" aria-label="Facebook" class="w-9 h-9 border border-line rounded-full flex items-center justify-center hover:border-brass transition-colors"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M13 22v-9h3l1-4h-4V7c0-1 .3-2 2-2h2V1.1C16.7 1 15.6 1 14.3 1 11 1 9 3 9 6.5V9H6v4h3v9z"/></svg></a>
         <a href="#" aria-label="Instagram" class="w-9 h-9 border border-line rounded-full flex items-center justify-center hover:border-brass transition-colors"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg></a>
@@ -1037,7 +1037,7 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
 
     scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x0B0D10, 0.045);
+    scene.fog = new THREE.FogExp2(0x08080A, 0.045);
 
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
     camera.position.set(0, 1.3, 6);
@@ -1107,16 +1107,19 @@
   }
 
   function buildParticles(){
-    var count = isMobile ? 260 : 700;
+    var count = isMobile ? 220 : 620;
     var positions = new Float32Array(count * 3);
     var colors = new Float32Array(count * 3);
     var brass = new THREE.Color(0xD4A63E);
     var emerald = new THREE.Color(0x1F7A5C);
+    var pts = [];
 
     for (var i = 0; i < count; i++){
-      positions[i*3]   = (Math.random() - 0.5) * 24;
-      positions[i*3+1] = (Math.random() - 0.5) * 14;
-      positions[i*3+2] = (Math.random() - 0.5) * 20 - 4;
+      var x = (Math.random() - 0.5) * 24;
+      var y = (Math.random() - 0.5) * 14;
+      var z = (Math.random() - 0.5) * 20 - 4;
+      positions[i*3] = x; positions[i*3+1] = y; positions[i*3+2] = z;
+      pts.push(new THREE.Vector3(x, y, z));
       var c = Math.random() > 0.5 ? brass : emerald;
       colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
     }
@@ -1125,10 +1128,35 @@
     geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
     var mat = new THREE.PointsMaterial({
-      size: 0.045, vertexColors: true, transparent: true, opacity: 0.65,
+      size: 0.045, vertexColors: true, transparent: true, opacity: 0.7,
       blending: THREE.AdditiveBlending, depthWrite: false
     });
-    return new THREE.Points(geo, mat);
+    var points = new THREE.Points(geo, mat);
+
+    // Ambient "particle network": a one-time nearest-neighbor pass wires nearby
+    // points into faint connective lines — computed once (not per-frame) so it
+    // reads as a live network without costing anything in the render loop.
+    var linkPositions = [];
+    var maxDist = isMobile ? 2.2 : 2.6;
+    var neighborsToCheck = 10;
+    for (var a = 0; a < pts.length; a++){
+      for (var k = 1; k <= neighborsToCheck; k++){
+        var b = a + k;
+        if (b >= pts.length) break;
+        if (pts[a].distanceTo(pts[b]) < maxDist){
+          linkPositions.push(pts[a].x, pts[a].y, pts[a].z, pts[b].x, pts[b].y, pts[b].z);
+        }
+      }
+    }
+    var linkGeo = new THREE.BufferGeometry();
+    linkGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(linkPositions), 3));
+    var linkMat = new THREE.LineBasicMaterial({ color: 0xD4A63E, transparent: true, opacity: 0.12 });
+    var links = new THREE.LineSegments(linkGeo, linkMat);
+
+    var group = new THREE.Group();
+    group.add(points);
+    group.add(links);
+    return group;
   }
 
   // Camera keyframes: each maps a chapter of the scroll story to a shot.
@@ -1147,6 +1175,18 @@
   var currentCarRot = 0;
   var targetLightHex = 0xD4A63E;
   var clock = new THREE.Clock();
+
+  // Cursor reactivity: normalized (-1..1) pointer position, eased in the render
+  // loop (never applied 1:1) so the car and camera drift toward the cursor
+  // fluidly instead of snapping — this is the "reacts to cursor" requirement.
+  var mouseX = 0, mouseY = 0;
+  var easedMouseX = 0, easedMouseY = 0;
+  if (!isTouch){
+    window.addEventListener('mousemove', function(e){
+      mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+      mouseY = (e.clientY / window.innerHeight) * 2 - 1;
+    }, { passive: true });
+  }
 
   function updateKeyframeTargets(p){
     var lo = keyframes[0], hi = keyframes[keyframes.length - 1];
@@ -1174,20 +1214,37 @@
       updateKeyframeTargets(sceneProgress);
     }
 
-    // Smooth camera dolly (decouples buttery motion from raw scroll jank)
-    camera.position.lerp(targetCamPos, reduceMotion ? 1 : 0.06);
+    // Ease the raw cursor position — this is what makes the reaction feel
+    // fluid rather than jittery, and costs nothing (two lerps per frame).
+    if (!reduceMotion){
+      easedMouseX += (mouseX - easedMouseX) * 0.04;
+      easedMouseY += (mouseY - easedMouseY) * 0.04;
+    }
+
+    // Smooth camera dolly (decouples buttery motion from raw scroll jank),
+    // with a small cursor-driven offset layered on top of the current chapter.
+    var cursorOffsetX = reduceMotion ? 0 : easedMouseX * 0.5;
+    var cursorOffsetY = reduceMotion ? 0 : -easedMouseY * 0.25;
+    camera.position.x += ((targetCamPos.x + cursorOffsetX) - camera.position.x) * (reduceMotion ? 1 : 0.06);
+    camera.position.y += ((targetCamPos.y + cursorOffsetY) - camera.position.y) * (reduceMotion ? 1 : 0.06);
+    camera.position.z += (targetCamPos.z - camera.position.z) * (reduceMotion ? 1 : 0.06);
     camera.lookAt(targetLookAt);
 
-    // Car rotation eases toward its target chapter angle
+    // Car rotation eases toward its target chapter angle, plus a subtle
+    // cursor-driven tilt so the model itself feels alive under the pointer.
     currentCarRot += (targetCarRot - currentCarRot) * (reduceMotion ? 1 : 0.05);
-    if (carGroup) carGroup.rotation.y = currentCarRot;
+    if (carGroup){
+      carGroup.rotation.y = currentCarRot + (reduceMotion ? 0 : easedMouseX * 0.15);
+      var targetTiltX = reduceMotion ? 0 : easedMouseY * 0.06;
+      carGroup.rotation.x += (targetTiltX - carGroup.rotation.x) * (reduceMotion ? 1 : 0.08);
+    }
 
     // Mood lighting cross-fade
     if (keyLight){
       keyLight.color.lerp(new THREE.Color(targetLightHex), 0.03);
     }
 
-    // Ambient particle drift — slow, continuous, never distracting
+    // Ambient particle network drift — slow, continuous, never distracting
     if (particles && !reduceMotion){
       particles.rotation.y += dt * 0.015;
       particles.position.y = Math.sin(clock.elapsedTime * 0.08) * 0.3;
